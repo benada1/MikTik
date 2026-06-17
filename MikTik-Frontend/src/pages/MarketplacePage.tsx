@@ -1,18 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, ShieldCheck, Eye, Zap, X, MapPin } from 'lucide-react';
 
-const ALL_TICKETS = [
-  { id: '1', category: 'Sports', name: 'Hapoel Beer Sheva vs Maccabi Haifa', month: 'Mar', day: '22', venue: 'Turner Stadium', city: 'Beer Sheva', price: 100, originalPrice: 120, discount: 17, views: 312, available: 15, verified: true, instant: true, section: 'East Stand', row: 3 },
-  { id: '2', category: 'Comedy', name: 'Gad Elbaz Stand-Up Special', month: 'Mar', day: '29', venue: 'Zappa Herzliya', city: 'Herzliya', price: 150, originalPrice: 180, discount: 17, views: 134, available: 2, verified: true, instant: false, section: 'Floor', row: 2 },
-  { id: '3', category: 'Theater', name: 'Habima Theater – The Dybbuk', month: 'Mar', day: '8', venue: 'Habima National Theatre', city: 'Tel Aviv', price: 250, originalPrice: 260, discount: 4, views: 89, available: 22, verified: true, instant: true, section: 'Stalls', row: 8 },
-  { id: '4', category: 'Festival', name: 'InDNegev Festival 2025', month: 'Apr', day: '3', venue: 'Negev Desert', city: 'Beer Sheva', price: 320, originalPrice: 390, discount: 18, views: 541, available: 6, verified: true, instant: false, section: 'General', row: 0 },
-  { id: '5', category: 'Sports', name: 'Maccabi Tel Aviv vs Real Madrid – Euroleague', month: 'Mar', day: '15', venue: 'Menora Mivtachim Arena', city: 'Tel Aviv', price: 380, originalPrice: 450, discount: 16, views: 820, available: 4, verified: true, instant: true, section: 'VIP A', row: 3 },
-  { id: '6', category: 'Concert', name: "Idan Raichel – Live at the Sultan's Pool", month: 'May', day: '10', venue: "Sultan's Pool", city: 'Jerusalem', price: 280, originalPrice: 310, discount: 10, views: 673, available: 9, verified: true, instant: true, section: 'Premium', row: 5 },
-  { id: '7', category: 'Concert', name: 'Eyal Golan Live Tour', month: 'Apr', day: '18', venue: 'Yarkon Park', city: 'Tel Aviv', price: 220, originalPrice: 250, discount: 12, views: 445, available: 18, verified: true, instant: false, section: 'Lawn', row: 0 },
-  { id: '8', category: 'Sports', name: 'Israel vs Portugal – World Cup Qualifier', month: 'Jun', day: '7', venue: 'Teddy Stadium', city: 'Jerusalem', price: 140, originalPrice: 140, discount: 0, views: 1200, available: 30, verified: true, instant: true, section: 'North Stand', row: 22 },
-  { id: '9', category: 'Comedy', name: 'Stand-Up Night at Haifa', month: 'Apr', day: '25', venue: 'Haifa Auditorium', city: 'Haifa', price: 80, originalPrice: 90, discount: 11, views: 67, available: 3, verified: false, instant: false, section: 'Balcony', row: 1 },
-];
+const API = 'http://localhost:5000/api';
+
+interface Ticket {
+  id: string;
+  name: string;
+  category: string;
+  month: string;
+  day: string;
+  venue: string;
+  city: string;
+  price: number;
+  originalPrice: number;
+  discount: number;
+  views: number;
+  available: number;
+  verified: boolean;
+  instant: boolean;
+  section: string;
+  row: string;
+}
 
 const CATEGORIES = ['All', 'Concert', 'Sports', 'Theater', 'Festival', 'Comedy'];
 const CITIES = ['All Cities', 'Tel Aviv', 'Jerusalem', 'Haifa', 'Beer Sheva', 'Herzliya'];
@@ -33,6 +42,8 @@ const CAT_EMOJI: Record<string, string> = {
 };
 
 export default function MarketplacePage() {
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [city, setCity] = useState('All Cities');
@@ -48,20 +59,26 @@ export default function MarketplacePage() {
     setVerifiedOnly(false); setInstantOnly(false); setSearch('');
   };
 
-  const filtered = ALL_TICKETS.filter(t => {
-    if (search && !t.name.toLowerCase().includes(search.toLowerCase()) && !t.venue.toLowerCase().includes(search.toLowerCase())) return false;
-    if (category !== 'All' && t.category !== category) return false;
-    if (city !== 'All Cities' && t.city !== city) return false;
-    if (t.price > maxPrice) return false;
-    if (verifiedOnly && !t.verified) return false;
-    if (instantOnly && !t.instant) return false;
-    return true;
-  }).sort((a, b) => {
-    if (sort === 'price-asc') return a.price - b.price;
-    if (sort === 'price-desc') return b.price - a.price;
-    if (sort === 'popular') return b.views - a.views;
-    return 0;
-  });
+  useEffect(() => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (category !== 'All') params.set('category', category);
+    if (city !== 'All Cities') params.set('city', city);
+    if (maxPrice < 5000) params.set('maxPrice', String(maxPrice));
+    if (verifiedOnly) params.set('verified', 'true');
+    if (instantOnly) params.set('instant', 'true');
+    if (search) params.set('search', search);
+    if (sort !== 'newest') params.set('sort', sort);
+
+    const token = localStorage.getItem('tt_token');
+    fetch(`${API}/tickets?${params.toString()}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(data => setTickets(data.tickets || []))
+      .catch(() => setTickets([]))
+      .finally(() => setLoading(false));
+  }, [category, city, maxPrice, verifiedOnly, instantOnly, search, sort]);
 
   return (
     <div className="bg-white dark:bg-zinc-950 min-h-screen">
@@ -125,7 +142,7 @@ export default function MarketplacePage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                <span className="font-semibold text-slate-900 dark:text-white">{filtered.length}</span> tickets found
+                {loading ? 'Loading...' : <><span className="font-semibold text-slate-900 dark:text-white">{tickets.length}</span> tickets found</>}
               </p>
               {hasFilters && (
                 <button onClick={clearFilters} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
@@ -134,7 +151,19 @@ export default function MarketplacePage() {
               )}
             </div>
 
-            {filtered.length === 0 ? (
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="rounded-2xl overflow-hidden border border-slate-200 dark:border-white/5 bg-white dark:bg-zinc-900 animate-pulse">
+                    <div className="h-48 bg-slate-200 dark:bg-zinc-800" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-3 bg-slate-200 dark:bg-zinc-800 rounded w-3/4" />
+                      <div className="h-5 bg-slate-200 dark:bg-zinc-800 rounded w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : tickets.length === 0 ? (
               <div className="text-center py-24">
                 <Search className="w-10 h-10 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
                 <p className="font-medium text-slate-500 dark:text-slate-400">No tickets match your filters</p>
@@ -144,14 +173,14 @@ export default function MarketplacePage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filtered.map(t => (
+                {tickets.map(t => (
                   <Link
                     key={t.id}
                     to={`/ticket/${t.id}`}
                     className="group block rounded-2xl overflow-hidden border border-slate-200 dark:border-white/5 hover:border-indigo-300 dark:hover:border-indigo-500/40 bg-white dark:bg-zinc-900 transition-all duration-300 hover:shadow-xl dark:hover:shadow-black/50 hover:-translate-y-1"
                   >
                     {/* Image / gradient area */}
-                    <div className={`relative h-48 bg-linear-to-br ${CAT_GRADIENT[t.category]}`}>
+                    <div className={`relative h-48 bg-linear-to-br ${CAT_GRADIENT[t.category] || CAT_GRADIENT['Concert']}`}>
                       <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
                       {/* Date badge */}
@@ -162,7 +191,7 @@ export default function MarketplacePage() {
 
                       {/* Top-left badges */}
                       <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
-                        <span className={`flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md text-white ${CAT_TAG[t.category]}`}>
+                        <span className={`flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md text-white ${CAT_TAG[t.category] || ''}`}>
                           {CAT_EMOJI[t.category]} {t.category}
                         </span>
                         {t.instant && (
@@ -208,9 +237,9 @@ export default function MarketplacePage() {
                         </span>
                       </div>
 
-                      {(t.row > 0 || t.available > 0) && (
+                      {(t.row || t.available > 0) && (
                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
-                          {t.row > 0 ? `Row ${t.row} · ` : ''}{t.available} tickets · {t.section}
+                          {t.row ? `Row ${t.row} · ` : ''}{t.available} tickets · {t.section}
                         </p>
                       )}
                     </div>

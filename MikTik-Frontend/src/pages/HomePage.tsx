@@ -1,13 +1,36 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Zap, Lock, ArrowRight, CheckCircle, CreditCard, Users, TrendingUp, Star, Eye, MapPin } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-const EVENT_DATA = [
-  { id: '1', categoryKey: 'concert', month: 'mar', day: '22', price: 280, originalPrice: 340, discount: 17, views: 312, gradient: 'from-violet-950 via-purple-900 to-indigo-950', tag: 'bg-purple-500/80' },
-  { id: '5', categoryKey: 'sports_card', month: 'mar', day: '15', price: 195, originalPrice: 195, discount: 0, views: 820, gradient: 'from-emerald-950 via-green-900 to-teal-950', tag: 'bg-emerald-500/80' },
-  { id: '3', categoryKey: 'theatre', month: 'mar', day: '8', price: 250, originalPrice: 260, discount: 4, views: 89, gradient: 'from-rose-950 via-red-900 to-pink-950', tag: 'bg-rose-500/80' },
-  { id: '4', categoryKey: 'festival', month: 'apr', day: '3', price: 320, originalPrice: 390, discount: 18, views: 541, gradient: 'from-orange-950 via-amber-900 to-yellow-950', tag: 'bg-orange-500/80' },
-];
+const API = 'http://localhost:5000/api';
+
+interface FeaturedTicket {
+  id: string;
+  name: string;
+  category: string;
+  month: string;
+  day: string;
+  city: string;
+  venue: string;
+  price: number;
+  originalPrice: number;
+  discount: number;
+  views: number;
+  verified: boolean;
+}
+
+const CAT_GRADIENT: Record<string, string> = {
+  Concert: 'from-violet-950 via-purple-900 to-indigo-950',
+  Sports: 'from-emerald-950 via-green-900 to-teal-950',
+  Theater: 'from-rose-950 via-red-900 to-pink-950',
+  Festival: 'from-orange-950 via-amber-900 to-yellow-950',
+  Comedy: 'from-yellow-900 via-amber-800 to-orange-950',
+};
+const CAT_TAG: Record<string, string> = {
+  Concert: 'bg-purple-500/80', Sports: 'bg-emerald-500/80',
+  Theater: 'bg-rose-500/80', Festival: 'bg-orange-500/80', Comedy: 'bg-yellow-500/80',
+};
 
 const CATEGORY_DATA = [
   { key: 'sports',    emoji: '⚽', to: '/marketplace?category=sports',  color: 'from-emerald-900/60 to-teal-950/60 border-emerald-800/40 hover:border-emerald-600/60' },
@@ -20,6 +43,14 @@ const CATEGORY_DATA = [
 
 export default function HomePage() {
   const { t } = useLanguage();
+  const [featuredTickets, setFeaturedTickets] = useState<FeaturedTicket[]>([]);
+
+  useEffect(() => {
+    fetch(`${API}/tickets?sort=popular&limit=4`)
+      .then(r => r.json())
+      .then(data => setFeaturedTickets(data.tickets || []))
+      .catch(() => {});
+  }, []);
 
   const STATS = [
     { value: '50K+', label: t('stats.ticketsSold') },
@@ -66,7 +97,7 @@ export default function HomePage() {
             {t('hero.badge')}
           </div>
 
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-slate-900 dark:text-white mb-4 leading-[1.05]">
+          <h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-7xl font-bold text-slate-900 dark:text-white mb-4 leading-[1.05]">
             {t('hero.title1')}
             <br />
             <span className="bg-linear-to-r from-indigo-500 via-violet-500 to-purple-500 bg-clip-text text-transparent">
@@ -158,27 +189,29 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {EVENT_DATA.map(e => (
+          {featuredTickets.map(e => (
             <Link key={e.id} to={`/ticket/${e.id}`} className="group block rounded-2xl overflow-hidden border border-slate-200 dark:border-white/5 hover:border-indigo-300 dark:hover:border-indigo-500/40 transition-all duration-300 hover:shadow-xl dark:hover:shadow-black/50 hover:-translate-y-1 bg-white dark:bg-zinc-900">
-              <div className={`relative h-44 bg-linear-to-br ${e.gradient}`}>
+              <div className={`relative h-44 bg-linear-to-br ${CAT_GRADIENT[e.category] || CAT_GRADIENT['Concert']}`}>
                 <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/20 to-transparent" />
 
                 <div className="absolute top-3 right-3 text-center bg-black/30 backdrop-blur-md rounded-xl px-2.5 py-1.5 border border-white/10">
-                  <div className="text-[9px] font-bold text-white/60 uppercase tracking-widest">{t(`month.${e.month}`)}</div>
+                  <div className="text-[9px] font-bold text-white/60 uppercase tracking-widest">{e.month}</div>
                   <div className="text-lg font-black text-white leading-none">{e.day}</div>
                 </div>
 
-                <div className="absolute top-3 left-3 flex items-center gap-1 bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
-                  <ShieldCheck className="w-2.5 h-2.5" />
-                  {t('event.verified')}
-                </div>
+                {e.verified && (
+                  <div className="absolute top-3 left-3 flex items-center gap-1 bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
+                    <ShieldCheck className="w-2.5 h-2.5" />
+                    {t('event.verified')}
+                  </div>
+                )}
 
                 <div className="absolute bottom-0 left-0 right-0 p-3.5">
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md text-white mb-1.5 inline-block ${e.tag}`}>
-                    {t(`category.${e.categoryKey}`)}
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md text-white mb-1.5 inline-block ${CAT_TAG[e.category] || ''}`}>
+                    {e.category}
                   </span>
                   <h3 className="font-bold text-sm text-white leading-snug line-clamp-2">
-                    {t(`event.${e.id}.name`)}
+                    {e.name}
                   </h3>
                 </div>
               </div>
@@ -186,7 +219,7 @@ export default function HomePage() {
               <div className="p-3.5">
                 <div className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 mb-2.5">
                   <MapPin className="w-3 h-3 shrink-0" />
-                  <span className="truncate">{t(`event.${e.id}.city`)} · {t(`event.${e.id}.venue`)}</span>
+                  <span className="truncate">{e.city} · {e.venue}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-baseline gap-1.5">

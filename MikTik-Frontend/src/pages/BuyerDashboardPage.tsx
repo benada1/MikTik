@@ -1,21 +1,63 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Ticket, ShieldCheck, Clock, CheckCircle, XCircle, Download, AlertCircle, ArrowRight } from 'lucide-react';
+import { Ticket, ShieldCheck, CheckCircle, Download, ArrowRight, MapPin, Calendar } from 'lucide-react';
 
-const PURCHASES = [
-  { id: 'ORD-001', event: 'Tel Aviv Music Festival', date: 'Dec 15, 2024', venue: 'Yarkon Park', qty: 2, total: 616, status: 'confirmed', ticketId: '1' },
-  { id: 'ORD-002', event: 'Maccabi TLV vs Real Madrid', date: 'Mar 15, 2025', venue: 'Menora Mivtachim Arena', qty: 1, total: 205, status: 'pending', ticketId: '5' },
-  { id: 'ORD-003', event: 'Habima Theater – The Dybbuk', date: 'Mar 8, 2025', venue: 'Habima National Theatre', qty: 2, total: 525, status: 'confirmed', ticketId: '3' },
-  { id: 'ORD-004', event: 'InDNegev Festival 2025', date: 'Apr 3, 2025', venue: 'Negev Desert', qty: 1, total: 336, status: 'cancelled', ticketId: '4' },
-];
+const API = 'http://localhost:5000/api';
 
-const STATUS_CONFIG = {
-  confirmed: { label: 'Confirmed', icon: CheckCircle, classes: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' },
-  pending:   { label: 'Pending',   icon: Clock,         classes: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800' },
-  cancelled: { label: 'Cancelled', icon: XCircle,       classes: 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800' },
+interface PurchasedTicket {
+  id: string;
+  name: string;
+  category: string;
+  venue: string;
+  city: string;
+  date: string;
+  month: string;
+  day: string;
+  section: string;
+  row: string;
+}
+
+interface Purchase {
+  id: string;
+  orderId: string;
+  ticket: PurchasedTicket | null;
+  quantity: number;
+  priceEach: number;
+  fee: number;
+  totalPaid: number;
+  status: 'pending' | 'confirmed' | 'cancelled';
+  createdAt: string;
+}
+
+const CAT_GRADIENT: Record<string, string> = {
+  Concert: 'from-violet-950 via-purple-900 to-indigo-950',
+  Sports: 'from-emerald-950 via-green-900 to-teal-950',
+  Theater: 'from-rose-950 via-red-900 to-pink-950',
+  Festival: 'from-orange-950 via-amber-900 to-yellow-950',
+  Comedy: 'from-yellow-900 via-amber-800 to-orange-950',
 };
 
 export default function BuyerDashboardPage() {
-  const confirmed = PURCHASES.filter(p => p.status === 'confirmed').length;
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('tt_token');
+    fetch(`${API}/purchases/my`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(data => setPurchases(data.purchases || []))
+      .catch(() => setPurchases([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const totalSpent = purchases
+    .filter(p => p.status !== 'cancelled')
+    .reduce((sum, p) => sum + p.totalPaid, 0);
+
+  const confirmed = purchases.filter(p => p.status === 'confirmed').length;
+  const pending = purchases.filter(p => p.status === 'pending').length;
 
   return (
     <div className="bg-white dark:bg-zinc-950 min-h-screen">
@@ -35,10 +77,10 @@ export default function BuyerDashboardPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Total orders', value: PURCHASES.length },
+            { label: 'Total orders', value: purchases.length },
             { label: 'Confirmed', value: confirmed },
-            { label: 'Pending', value: PURCHASES.filter(p => p.status === 'pending').length },
-            { label: 'Total spent', value: `₪${PURCHASES.filter(p => p.status !== 'cancelled').reduce((s, p) => s + p.total, 0)}` },
+            { label: 'Pending', value: pending },
+            { label: 'Total spent', value: `₪${totalSpent}` },
           ].map(s => (
             <div key={s.label} className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-4">
               <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{s.value}</div>
@@ -55,54 +97,110 @@ export default function BuyerDashboardPage() {
           </p>
         </div>
 
-        {/* Orders */}
-        <div className="space-y-3">
-          {PURCHASES.map(order => {
-            const cfg = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG];
-            const StatusIcon = cfg.icon;
-            return (
-              <div key={order.id} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-5">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-500/20 rounded-xl flex items-center justify-center shrink-0">
-                    <Ticket className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+        {/* Content */}
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-5 animate-pulse">
+                <div className="flex gap-4">
+                  <div className="w-20 h-20 bg-slate-200 dark:bg-zinc-800 rounded-xl shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-slate-200 dark:bg-zinc-800 rounded w-2/3" />
+                    <div className="h-3 bg-slate-200 dark:bg-zinc-800 rounded w-1/2" />
+                    <div className="h-3 bg-slate-200 dark:bg-zinc-800 rounded w-1/3" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 flex-wrap">
-                      <div>
-                        <h3 className="font-semibold text-slate-900 dark:text-white text-sm">{order.event}</h3>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{order.date} · {order.venue}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : purchases.length === 0 ? (
+          <div className="text-center py-24">
+            <div className="w-16 h-16 bg-slate-100 dark:bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Ticket className="w-8 h-8 text-slate-400" />
+            </div>
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-1">No tickets yet</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Browse the marketplace and buy your first ticket.</p>
+            <Link
+              to="/marketplace"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold text-sm transition-colors"
+            >
+              Browse tickets <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {purchases.map(order => {
+              const t = order.ticket;
+              const gradient = t ? (CAT_GRADIENT[t.category] || CAT_GRADIENT['Concert']) : CAT_GRADIENT['Concert'];
+              const eventDate = t?.date
+                ? new Date(t.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                : t ? `${t.month} ${t.day}` : '—';
+
+              return (
+                <div key={order.id} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+                  <div className="flex">
+                    {/* Gradient thumbnail */}
+                    <div className={`relative w-24 sm:w-32 shrink-0 bg-linear-to-br ${gradient} flex flex-col items-center justify-center`}>
+                      <div className="absolute inset-0 bg-black/30" />
+                      <div className="relative text-center px-2">
+                        <div className="text-[10px] font-bold text-white/70 uppercase tracking-widest">{t?.month ?? '—'}</div>
+                        <div className="text-2xl font-black text-white leading-none">{t?.day ?? '—'}</div>
                       </div>
-                      <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.classes}`}>
-                        <StatusIcon className="w-3 h-3" />
-                        {cfg.label}
-                      </span>
                     </div>
 
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-white/5">
-                      <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-                        <span>{order.id}</span>
-                        <span>{order.qty} ticket{order.qty > 1 ? 's' : ''}</span>
-                        <span className="font-semibold text-slate-700 dark:text-slate-300">₪{order.total}</span>
+                    {/* Body */}
+                    <div className="flex-1 min-w-0 p-4">
+                      <div className="flex items-start justify-between gap-2 flex-wrap mb-2">
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-slate-900 dark:text-white text-sm truncate">
+                            {t?.name ?? 'Ticket details unavailable'}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                            {t?.city && (
+                              <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                                <MapPin className="w-3 h-3" />{t.city} · {t.venue}
+                              </span>
+                            )}
+                            {eventDate && (
+                              <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                                <Calendar className="w-3 h-3" />{eventDate}
+                              </span>
+                            )}
+                          </div>
+                          {(t?.section || t?.row) && (
+                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                              {t.section}{t.row ? ` · Row ${t.row}` : ''}
+                            </p>
+                          )}
+                        </div>
+
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shrink-0">
+                          <CheckCircle className="w-3 h-3" /> Confirmed
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {order.status === 'confirmed' && (
-                          <button className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors">
-                            <Download className="w-3.5 h-3.5" /> Download
-                          </button>
-                        )}
-                        {order.status === 'pending' && (
-                          <button className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 font-medium transition-colors">
-                            <AlertCircle className="w-3.5 h-3.5" /> View escrow
-                          </button>
+
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/5">
+                        <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                          <span className="font-mono">{order.orderId}</span>
+                          <span>{order.quantity} ticket{order.quantity > 1 ? 's' : ''}</span>
+                          <span className="font-semibold text-slate-700 dark:text-slate-300">₪{order.totalPaid}</span>
+                        </div>
+                        {t && (
+                          <Link
+                            to={`/ticket/${t.id}`}
+                            className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors"
+                          >
+                            <Download className="w-3.5 h-3.5" /> View ticket
+                          </Link>
                         )}
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

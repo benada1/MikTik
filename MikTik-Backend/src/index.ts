@@ -14,10 +14,19 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use('/uploads', require('express').static(require('path').join(process.cwd(), 'uploads')));
 
 // Auth routes
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
+
+// Ticket routes
+const ticketRoutes = require('./routes/tickets');
+app.use('/api/tickets', ticketRoutes);
+
+// Purchase routes
+const purchaseRoutes = require('./routes/purchases');
+app.use('/api/purchases', purchaseRoutes);
 
 app.get('/api/health', (req: any, res: any) => {
   res.json({ status: 'Backend is running!' });

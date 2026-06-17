@@ -6,15 +6,18 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "seed": "ts-node-dev --transpile-only src/seeds/tickets.ts"
   },
   "dependencies": {
+    "@types/multer": "^2.1.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.7.0"
+    "mongoose": "^9.7.0",
+    "multer": "^2.2.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

@@ -1,28 +1,107 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, Upload, Info, CheckCircle } from 'lucide-react';
+import { ShieldCheck, Upload, Info, CheckCircle, X, FileText, Image, Zap } from 'lucide-react';
 
+const API = 'http://localhost:5000/api';
 const CATEGORIES = ['Concert', 'Sports', 'Theater', 'Festival', 'Comedy', 'Other'];
 
 const inputClass = "w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors";
 const labelClass = "block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2";
 
+interface SelectedFile {
+  file: File;
+  preview: string | null;
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default function SellTicketPage() {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     event: '', category: '', date: '', venue: '', city: '',
-    section: '', row: '', qty: '1', price: '', description: '',
+    section: '', row: '', qty: '1', price: '', originalPrice: '', description: '',
+    instant: false,
   });
+  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
+  const [dragging, setDragging] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-    setForm(f => ({ ...f, [k]: e.target.value }));
+  const set = (k: keyof typeof form) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => setForm(f => ({ ...f, [k]: e.target.value }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const addFiles = useCallback((incoming: FileList | File[]) => {
+    const allowed = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+    const newEntries: SelectedFile[] = [];
+    Array.from(incoming).forEach(file => {
+      if (!allowed.includes(file.type)) return;
+      if (file.size > 10 * 1024 * 1024) return;
+      const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
+      newEntries.push({ file, preview });
+    });
+    setSelectedFiles(prev => {
+      const combined = [...prev, ...newEntries];
+      return combined.slice(0, 5);
+    });
+  }, []);
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => {
+      const updated = [...prev];
+      if (updated[index].preview) URL.revokeObjectURL(updated[index].preview!);
+      updated.splice(index, 1);
+      return updated;
+    });
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    if (e.dataTransfer.files) addFiles(e.dataTransfer.files);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => { setLoading(false); setSubmitted(true); }, 1500);
+    setError('');
+    try {
+      const token = localStorage.getItem('tt_token');
+
+      const formData = new FormData();
+      formData.append('name', form.event);
+      formData.append('category', form.category);
+      formData.append('date', form.date);
+      formData.append('venue', form.venue);
+      formData.append('city', form.city);
+      formData.append('section', form.section);
+      formData.append('row', form.row);
+      formData.append('qty', form.qty);
+      formData.append('price', form.price);
+      if (form.originalPrice) formData.append('originalPrice', form.originalPrice);
+      formData.append('description', form.description);
+      formData.append('instant', String(form.instant));
+      selectedFiles.forEach(({ file }) => formData.append('files', file));
+
+      const res = await fetch(`${API}/tickets`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to list ticket');
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (submitted) {
@@ -34,13 +113,23 @@ export default function SellTicketPage() {
           </div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Listing submitted!</h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
-            Your ticket listing is under review and will go live within a few minutes.
+            Your ticket listing is live on the marketplace.
           </p>
           <div className="flex flex-col gap-3">
-            <button onClick={() => navigate('/seller-dashboard')} className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold text-sm transition-colors">
-              View my listings
+            <button
+              onClick={() => navigate('/marketplace')}
+              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold text-sm transition-colors"
+            >
+              View marketplace
             </button>
-            <button onClick={() => { setSubmitted(false); setForm({ event: '', category: '', date: '', venue: '', city: '', section: '', row: '', qty: '1', price: '', description: '' }); }} className="w-full py-3 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-colors hover:bg-slate-200 dark:hover:bg-zinc-800">
+            <button
+              onClick={() => {
+                setSubmitted(false);
+                setSelectedFiles([]);
+                setForm({ event: '', category: '', date: '', venue: '', city: '', section: '', row: '', qty: '1', price: '', originalPrice: '', description: '', instant: false });
+              }}
+              className="w-full py-3 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-colors hover:bg-slate-200 dark:hover:bg-zinc-800"
+            >
               List another ticket
             </button>
           </div>
@@ -68,35 +157,42 @@ export default function SellTicketPage() {
           </div>
         </div>
 
+        {error && (
+          <div className="mb-6 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
+
           {/* Event info */}
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-6">
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-5">Event information</h2>
             <div className="space-y-4">
               <div>
-                <label className={labelClass}>Event name</label>
+                <label className={labelClass}>Event name *</label>
                 <input type="text" value={form.event} onChange={set('event')} placeholder="e.g. Tel Aviv Music Festival" required className={inputClass} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Category</label>
+                  <label className={labelClass}>Category *</label>
                   <select value={form.category} onChange={set('category')} required className={inputClass}>
                     <option value="">Select category</option>
                     {CATEGORIES.map(c => <option key={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className={labelClass}>Event date</label>
+                  <label className={labelClass}>Event date *</label>
                   <input type="date" value={form.date} onChange={set('date')} required className={inputClass} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Venue</label>
+                  <label className={labelClass}>Venue *</label>
                   <input type="text" value={form.venue} onChange={set('venue')} placeholder="Yarkon Park" required className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>City</label>
+                  <label className={labelClass}>City *</label>
                   <input type="text" value={form.city} onChange={set('city')} placeholder="Tel Aviv" required className={inputClass} />
                 </div>
               </div>
@@ -119,34 +215,121 @@ export default function SellTicketPage() {
                 <div>
                   <label className={labelClass}>Qty</label>
                   <select value={form.qty} onChange={set('qty')} className={inputClass}>
-                    {[1,2,3,4,5,6,7,8].map(n => <option key={n}>{n}</option>)}
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(n => <option key={n}>{n}</option>)}
                   </select>
                 </div>
               </div>
-              <div>
-                <label className={labelClass}>Price per ticket (₪)</label>
-                <input type="number" value={form.price} onChange={set('price')} placeholder="250" min="1" required className={inputClass} />
-                <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                  <Info className="w-3 h-3" /> A 5% service fee is deducted from each sale.
-                </p>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Your asking price (₪) *</label>
+                  <input type="number" value={form.price} onChange={set('price')} placeholder="250" min="1" required className={inputClass} />
+                  <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                    <Info className="w-3 h-3" /> 5% service fee deducted from each sale.
+                  </p>
+                </div>
+                <div>
+                  <label className={labelClass}>Face value / original price (₪)</label>
+                  <input type="number" value={form.originalPrice} onChange={set('originalPrice')} placeholder="300" min="1" className={inputClass} />
+                  <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">Used to show discount badge.</p>
+                </div>
               </div>
+
               <div>
-                <label className={labelClass}>Description (optional)</label>
-                <textarea value={form.description} onChange={set('description')} rows={3} placeholder="Describe the seats, view, or any other details buyers should know..." className={`${inputClass} resize-none`} />
+                <label className={labelClass}>Description</label>
+                <textarea
+                  value={form.description}
+                  onChange={set('description')}
+                  rows={3}
+                  placeholder="Describe the seats, view, or any other details buyers should know..."
+                  className={`${inputClass} resize-none`}
+                />
+              </div>
+
+              {/* Instant transfer toggle */}
+              <div className="flex items-center justify-between py-3 px-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl">
+                <div className="flex items-center gap-2.5">
+                  <Zap className="w-4 h-4 text-amber-500" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Instant transfer</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Tickets sent automatically on payment</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, instant: !f.instant }))}
+                  className={`relative w-10 h-6 rounded-full transition-colors shrink-0 ${form.instant ? 'bg-amber-500' : 'bg-slate-200 dark:bg-zinc-700'}`}
+                >
+                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${form.instant ? 'left-5' : 'left-1'}`} />
+                </button>
               </div>
             </div>
           </div>
 
-          {/* Upload */}
+          {/* File upload */}
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-6">
-            <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-2">Ticket files</h2>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">Upload your ticket files. They will be held securely and only released to the buyer after payment is confirmed.</p>
-            <label className="flex flex-col items-center justify-center gap-2 h-28 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-all">
+            <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-1">Ticket files</h2>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
+              Upload your ticket files. Held securely and only released to the buyer after payment is confirmed. Max 5 files, 10 MB each.
+            </p>
+
+            {/* Drop zone */}
+            <div
+              onDragOver={e => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={onDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`flex flex-col items-center justify-center gap-2 h-28 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
+                dragging
+                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40'
+                  : 'border-slate-200 dark:border-white/10 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30'
+              }`}
+            >
               <Upload className="w-6 h-6 text-slate-400" />
-              <span className="text-sm text-slate-500 dark:text-slate-400">Drop files here or <span className="text-indigo-600 dark:text-indigo-400 font-medium">click to upload</span></span>
-              <span className="text-xs text-slate-400">PDF, PNG, JPG up to 10MB</span>
-              <input type="file" accept=".pdf,.png,.jpg,.jpeg" className="hidden" multiple />
-            </label>
+              <span className="text-sm text-slate-500 dark:text-slate-400">
+                Drop files here or <span className="text-indigo-600 dark:text-indigo-400 font-medium">click to upload</span>
+              </span>
+              <span className="text-xs text-slate-400">PDF, PNG, JPG up to 10 MB · up to 5 files</span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg"
+                multiple
+                className="hidden"
+                onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }}
+              />
+            </div>
+
+            {/* File list */}
+            {selectedFiles.length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {selectedFiles.map(({ file, preview }, i) => (
+                  <li key={`${file.name}-${i}`} className="flex items-center gap-3 px-3 py-2.5 bg-slate-50 dark:bg-zinc-800 rounded-xl">
+                    {preview ? (
+                      <img src={preview} alt="" className="w-10 h-10 object-cover rounded-lg shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg flex items-center justify-center shrink-0">
+                        {file.type === 'application/pdf'
+                          ? <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                          : <Image className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                        }
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{file.name}</p>
+                      <p className="text-xs text-slate-400">{formatBytes(file.size)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(i)}
+                      className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <button

@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Ticket, Menu, X, Sun, Moon, Bell, LogOut, User } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
-import { useLanguage } from '../context/LanguageContext';
-import { useAuth } from '../context/AuthContext';
+import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, Sun, Moon, Bell, LogOut, User } from "lucide-react";
+import logo from "../assets/miktik.jpg";
+import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -16,42 +17,44 @@ export default function Navbar() {
   const isActive = (path: string) => location.pathname === path;
 
   const NAV_LINKS = [
-    { to: '/marketplace', label: t('nav.marketplace') },
-    { to: '/sell', label: t('nav.sell') },
-    { to: '/buyer-dashboard', label: t('nav.myTickets') },
+    { to: "/marketplace", label: t("nav.marketplace") },
+    { to: "/sell", label: t("nav.sell") },
+    { to: "/buyer-dashboard", label: t("nav.myTickets") },
   ];
 
   const handleLogout = () => {
     logout();
     setOpen(false);
-    navigate('/');
+    navigate("/");
   };
 
   return (
     <nav className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/90 backdrop-blur-md border-b border-slate-200/60 dark:border-white/6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 shrink-0" onClick={() => setOpen(false)}>
-            <div className="w-8 h-8 bg-indigo-600 dark:bg-indigo-500 rounded-xl flex items-center justify-center shadow-md shadow-indigo-500/30">
-              <Ticket className="w-4 h-4 text-white" />
-            </div>
+          <Link
+            to="/"
+            className="flex items-center gap-2.5 shrink-0"
+            onClick={() => setOpen(false)}
+          >
+            <img src={logo} alt="MikTik" className="h-8 w-auto rounded-xl" />
             <span className="text-[17px] font-bold tracking-tight text-slate-900 dark:text-white">
-              Ticket<span className="text-indigo-600 dark:text-indigo-400">Trust</span>
+              Mik
+              <span className="text-indigo-600 dark:text-indigo-400">Tik</span>
             </span>
           </Link>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-1">
-            {NAV_LINKS.map(l => (
+            {NAV_LINKS.map((l) => (
               <Link
                 key={l.to}
                 to={l.to}
                 className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive(l.to)
-                    ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                    ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 {l.label}
@@ -62,9 +65,14 @@ export default function Navbar() {
           {/* Right side */}
           <div className="flex items-center gap-2">
             {/* Notifications */}
-            <button className="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors" aria-label="Notifications">
+            <button
+              className="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors"
+              aria-label="Notifications"
+            >
               <Bell className="w-4.5 h-4.5" />
-              <span className="absolute top-1 right-1 w-4 h-4 bg-indigo-600 dark:bg-indigo-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center leading-none">3</span>
+              <span className="absolute top-1 right-1 w-4 h-4 bg-indigo-600 dark:bg-indigo-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center leading-none">
+                3
+              </span>
             </button>
 
             {/* Language toggle */}
@@ -73,7 +81,7 @@ export default function Navbar() {
               className="px-2 py-1.5 rounded-lg text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors tracking-wide"
               aria-label="Toggle language"
             >
-              {lang === 'en' ? 'עב' : 'EN'}
+              {lang === "en" ? "עב" : "EN"}
             </button>
 
             {/* Dark mode toggle */}
@@ -82,7 +90,11 @@ export default function Navbar() {
               className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors"
               aria-label="Toggle theme"
             >
-              {theme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+              {theme === "dark" ? (
+                <Sun className="w-4.5 h-4.5" />
+              ) : (
+                <Moon className="w-4.5 h-4.5" />
+              )}
             </button>
 
             {/* Auth: logged in vs logged out */}
@@ -111,13 +123,13 @@ export default function Navbar() {
                   to="/login"
                   className="px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  {t('nav.signIn')}
+                  {t("nav.signIn")}
                 </Link>
                 <Link
                   to="/register"
                   className="px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white transition-colors shadow-sm shadow-indigo-500/25"
                 >
-                  {t('nav.getStarted')}
+                  {t("nav.getStarted")}
                 </Link>
               </div>
             )}
@@ -136,15 +148,15 @@ export default function Navbar() {
       {/* Mobile menu */}
       {open && (
         <div className="md:hidden border-t border-slate-200 dark:border-white/5 bg-white dark:bg-zinc-950 px-4 py-3 space-y-1">
-          {NAV_LINKS.map(l => (
+          {NAV_LINKS.map((l) => (
             <Link
               key={l.to}
               to={l.to}
               onClick={() => setOpen(false)}
               className={`block px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                 isActive(l.to)
-                  ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                  ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5"
               }`}
             >
               {l.label}
@@ -157,7 +169,9 @@ export default function Navbar() {
                   <div className="w-6 h-6 rounded-full bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center">
                     <User className="w-3.5 h-3.5 text-white" />
                   </div>
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{user.name}</span>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {user.name}
+                  </span>
                 </div>
                 <button
                   onClick={handleLogout}
@@ -169,11 +183,19 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link to="/login" onClick={() => setOpen(false)} className="block text-center px-4 py-2.5 rounded-xl text-sm font-medium border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300">
-                  {t('nav.signIn')}
+                <Link
+                  to="/login"
+                  onClick={() => setOpen(false)}
+                  className="block text-center px-4 py-2.5 rounded-xl text-sm font-medium border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300"
+                >
+                  {t("nav.signIn")}
                 </Link>
-                <Link to="/register" onClick={() => setOpen(false)} className="block text-center px-4 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 dark:bg-indigo-500 text-white">
-                  {t('nav.getStarted')}
+                <Link
+                  to="/register"
+                  onClick={() => setOpen(false)}
+                  className="block text-center px-4 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 dark:bg-indigo-500 text-white"
+                >
+                  {t("nav.getStarted")}
                 </Link>
               </>
             )}
