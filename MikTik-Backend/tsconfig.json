@@ -11,7 +11,9 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "6.0",
+    "types": ["node"],
+    "moduleDetection": "force"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

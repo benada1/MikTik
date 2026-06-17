@@ -1,20 +1,35 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Eye, EyeOff, ShieldCheck, Ticket } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Eye, EyeOff, ShieldCheck, Ticket, AlertCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { theme, toggle } = useTheme();
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const from = (location.state as any)?.from?.pathname || '/marketplace';
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
-    setTimeout(() => setLoading(false), 1500);
+    try {
+      await login(email, password);
+      navigate(from, { replace: true });
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -76,6 +91,13 @@ export default function LoginPage() {
           <div className="w-full max-w-sm">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Welcome back</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">Sign in to your TicketTrust account</p>
+
+            {error && (
+              <div className="flex items-start gap-2.5 mb-5 px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/50 rounded-xl text-sm text-red-700 dark:text-red-400">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>

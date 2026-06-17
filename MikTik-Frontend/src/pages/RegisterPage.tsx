@@ -1,22 +1,71 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Eye, EyeOff, ShieldCheck, Ticket, Sun, Moon } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, ShieldCheck, Ticket, Sun, Moon, AlertCircle, CheckCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+
+function getPasswordStrength(pw: string): { label: string; color: string; width: string } | null {
+  if (!pw) return null;
+  if (pw.length < 8) return { label: 'Too short', color: 'bg-red-500', width: 'w-1/4' };
+  const hasUpper = /[A-Z]/.test(pw);
+  const hasNum = /[0-9]/.test(pw);
+  const hasSymbol = /[^A-Za-z0-9]/.test(pw);
+  const score = [hasUpper, hasNum, hasSymbol].filter(Boolean).length;
+  if (score === 0) return { label: 'Weak', color: 'bg-orange-500', width: 'w-2/4' };
+  if (score === 1) return { label: 'Fair', color: 'bg-yellow-500', width: 'w-3/4' };
+  return { label: 'Strong', color: 'bg-green-500', width: 'w-full' };
+}
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Partial<typeof form>>({});
   const { theme, toggle } = useTheme();
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(f => ({ ...f, [k]: e.target.value }));
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setTimeout(() => setLoading(false), 1500);
+    setFieldErrors(fe => ({ ...fe, [k]: '' }));
+    setError('');
   };
+
+  const validate = () => {
+    const errs: Partial<typeof form> = {};
+    if (!form.name.trim()) errs.name = 'Name is required';
+    if (!form.email.trim()) errs.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Enter a valid email address';
+    if (!form.password) errs.password = 'Password is required';
+    else if (form.password.length < 8) errs.password = 'Password must be at least 8 characters';
+    if (!form.confirm) errs.confirm = 'Please confirm your password';
+    else if (form.password !== form.confirm) errs.confirm = 'Passwords do not match';
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    setError('');
+    setLoading(true);
+    try {
+      await register(form.name, form.email, form.password);
+      navigate('/marketplace', { replace: true });
+    } catch (err: any) {
+      const msg: string = err.message || 'Something went wrong. Please try again.';
+      if (msg.toLowerCase().includes('email already exists') || msg.toLowerCase().includes('sign in')) {
+        setFieldErrors(fe => ({ ...fe, email: msg }));
+      } else {
+        setError(msg);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const strength = getPasswordStrength(form.password);
 
   return (
     <div className="min-h-screen flex bg-white dark:bg-zinc-950">
@@ -76,24 +125,58 @@ export default function RegisterPage() {
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Create account</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">Free forever. No credit card required.</p>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {[
-                { key: 'name', label: 'Full name', type: 'text', placeholder: 'Yossi Cohen' },
-                { key: 'email', label: 'Email address', type: 'email', placeholder: 'you@example.com' },
-              ].map(({ key, label, type, placeholder }) => (
-                <div key={key}>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{label}</label>
-                  <input
-                    type={type}
-                    value={form[key as keyof typeof form]}
-                    onChange={set(key as keyof typeof form)}
-                    placeholder={placeholder}
-                    required
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                  />
-                </div>
-              ))}
+            {error && (
+              <div className="flex items-start gap-2.5 mb-5 px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/50 rounded-xl text-sm text-red-700 dark:text-red-400">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
 
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Name */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Full name</label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={set('name')}
+                  placeholder="Yossi Cohen"
+                  className={`w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${fieldErrors.name ? 'border-red-400 dark:border-red-600' : 'border-slate-200 dark:border-white/10'}`}
+                />
+                {fieldErrors.name && (
+                  <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />{fieldErrors.name}
+                  </p>
+                )}
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Email address</label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={set('email')}
+                  placeholder="you@example.com"
+                  className={`w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${fieldErrors.email ? 'border-red-400 dark:border-red-600' : 'border-slate-200 dark:border-white/10'}`}
+                />
+                {fieldErrors.email && (
+                  <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    <span>
+                      {fieldErrors.email.includes('sign in') ? (
+                        <>
+                          {fieldErrors.email.split('sign in')[0]}
+                          <Link to="/login" className="font-semibold underline">sign in</Link>
+                          {fieldErrors.email.split('sign in')[1]}
+                        </>
+                      ) : fieldErrors.email}
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              {/* Password */}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Password</label>
                 <div className="relative">
@@ -102,15 +185,28 @@ export default function RegisterPage() {
                     value={form.password}
                     onChange={set('password')}
                     placeholder="Min 8 characters"
-                    required
-                    className="w-full px-4 pr-10 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                    className={`w-full px-4 pr-10 py-3 bg-slate-50 dark:bg-zinc-900 border rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${fieldErrors.password ? 'border-red-400 dark:border-red-600' : 'border-slate-200 dark:border-white/10'}`}
                   />
                   <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
                     {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {fieldErrors.password ? (
+                  <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{fieldErrors.password}</p>
+                ) : strength && (
+                  <div className="mt-2 space-y-1">
+                    <div className="h-1 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full transition-all ${strength.color} ${strength.width}`} />
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {strength.label === 'Strong' && <CheckCircle className="w-3 h-3 text-green-500" />}
+                      <span className="text-xs text-slate-400">{strength.label}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
+              {/* Confirm password */}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Confirm password</label>
                 <input
@@ -118,9 +214,11 @@ export default function RegisterPage() {
                   value={form.confirm}
                   onChange={set('confirm')}
                   placeholder="••••••••"
-                  required
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                  className={`w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${fieldErrors.confirm ? 'border-red-400 dark:border-red-600' : 'border-slate-200 dark:border-white/10'}`}
                 />
+                {fieldErrors.confirm && (
+                  <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{fieldErrors.confirm}</p>
+                )}
               </div>
 
               <p className="text-xs text-slate-400 dark:text-slate-500">

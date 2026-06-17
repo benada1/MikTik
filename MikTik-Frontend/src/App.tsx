@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
+import PrivateRoute from './components/PrivateRoute';
 import HomePage from './pages/HomePage';
 import MarketplacePage from './pages/MarketplacePage';
 import TicketDetailsPage from './pages/TicketDetailsPage';
@@ -29,14 +30,14 @@ function App() {
             <Layout>
               <Routes>
                 <Route path="/" element={<HomePage />} />
-                <Route path="/marketplace" element={<MarketplacePage />} />
-                <Route path="/ticket/:id" element={<TicketDetailsPage />} />
-                <Route path="/buyer-dashboard" element={<BuyerDashboardPage />} />
-                <Route path="/seller-dashboard" element={<SellerDashboardPage />} />
-                <Route path="/sell" element={<SellTicketPage />} />
-                <Route path="/wallet" element={<WalletPage />} />
-                <Route path="/dispute-center" element={<DisputeCenterPage />} />
-                <Route path="/admin" element={<AdminPanelPage />} />
+                <Route path="/marketplace" element={<PrivateRoute><MarketplacePage /></PrivateRoute>} />
+                <Route path="/ticket/:id" element={<PrivateRoute><TicketDetailsPage /></PrivateRoute>} />
+                <Route path="/buyer-dashboard" element={<PrivateRoute><BuyerDashboardPage /></PrivateRoute>} />
+                <Route path="/seller-dashboard" element={<PrivateRoute><SellerDashboardPage /></PrivateRoute>} />
+                <Route path="/sell" element={<PrivateRoute><SellTicketPage /></PrivateRoute>} />
+                <Route path="/wallet" element={<PrivateRoute><WalletPage /></PrivateRoute>} />
+                <Route path="/dispute-center" element={<PrivateRoute><DisputeCenterPage /></PrivateRoute>} />
+                <Route path="/admin" element={<PrivateRoute><AdminPanelPage /></PrivateRoute>} />
               </Routes>
             </Layout>
           }

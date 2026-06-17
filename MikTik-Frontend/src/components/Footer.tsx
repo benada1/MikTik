@@ -1,28 +1,31 @@
 import { Link } from 'react-router-dom';
 import { Ticket, ShieldCheck } from 'lucide-react';
-
-const LINKS = {
-  Marketplace: [
-    { label: 'Browse Tickets', to: '/marketplace' },
-    { label: 'Sell Tickets', to: '/sell' },
-    { label: 'My Purchases', to: '/buyer-dashboard' },
-    { label: 'My Listings', to: '/seller-dashboard' },
-  ],
-  Support: [
-    { label: 'Dispute Center', to: '/dispute-center' },
-    { label: 'Wallet & Payments', to: '/wallet' },
-    { label: 'How It Works', to: '/' },
-    { label: 'Safety Guide', to: '/' },
-  ],
-  Account: [
-    { label: 'Sign In', to: '/login' },
-    { label: 'Register', to: '/register' },
-    { label: 'Privacy Policy', to: '/' },
-    { label: 'Terms of Service', to: '/' },
-  ],
-};
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Footer() {
+  const { t } = useLanguage();
+
+  const LINKS = {
+    [t('footer.section.marketplace')]: [
+      { label: t('footer.browseTickets'), to: '/marketplace' },
+      { label: t('footer.sellTickets'), to: '/sell' },
+      { label: t('footer.myPurchases'), to: '/buyer-dashboard' },
+      { label: t('footer.myListings'), to: '/seller-dashboard' },
+    ],
+    [t('footer.section.support')]: [
+      { label: t('footer.disputeCenter'), to: '/dispute-center' },
+      { label: t('footer.wallet'), to: '/wallet' },
+      { label: t('footer.howItWorks'), to: '/' },
+      { label: t('footer.safetyGuide'), to: '/' },
+    ],
+    [t('footer.section.account')]: [
+      { label: t('footer.signIn'), to: '/login' },
+      { label: t('footer.register'), to: '/register' },
+      { label: t('footer.privacy'), to: '/' },
+      { label: t('footer.terms'), to: '/' },
+    ],
+  };
+
   return (
     <footer className="border-t border-slate-200 dark:border-white/5 bg-white dark:bg-zinc-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -38,11 +41,11 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
-              Israel's most secure ticket marketplace. Every transaction escrow-protected.
+              {t('footer.tagline')}
             </p>
             <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Escrow protected · ID verified</span>
+              <span>{t('footer.escrow')}</span>
             </div>
           </div>
 
@@ -67,8 +70,8 @@ export default function Footer() {
         </div>
 
         <div className="mt-10 pt-6 border-t border-slate-100 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-slate-400 dark:text-slate-500">© 2025 TicketTrust. All rights reserved.</p>
-          <p className="text-xs text-slate-400 dark:text-slate-500">Secure ticket exchange · Licensed in Israel</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">{t('footer.copyright')}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">{t('footer.licensed')}</p>
         </div>
       </div>
     </footer>
