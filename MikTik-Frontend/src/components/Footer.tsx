@@ -1,73 +1,74 @@
 import { Link } from 'react-router-dom';
-import { Ticket, ShieldCheck, Lock, CreditCard } from 'lucide-react';
+import { Ticket, ShieldCheck } from 'lucide-react';
+
+const LINKS = {
+  Marketplace: [
+    { label: 'Browse Tickets', to: '/marketplace' },
+    { label: 'Sell Tickets', to: '/sell' },
+    { label: 'My Purchases', to: '/buyer-dashboard' },
+    { label: 'My Listings', to: '/seller-dashboard' },
+  ],
+  Support: [
+    { label: 'Dispute Center', to: '/dispute-center' },
+    { label: 'Wallet & Payments', to: '/wallet' },
+    { label: 'How It Works', to: '/' },
+    { label: 'Safety Guide', to: '/' },
+  ],
+  Account: [
+    { label: 'Sign In', to: '/login' },
+    { label: 'Register', to: '/register' },
+    { label: 'Privacy Policy', to: '/' },
+    { label: 'Terms of Service', to: '/' },
+  ],
+};
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-900 text-slate-400 mt-auto">
+    <footer className="border-t border-slate-200 dark:border-white/5 bg-white dark:bg-zinc-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="md:col-span-1">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="bg-indigo-600 p-1.5 rounded-lg">
-                <Ticket className="w-5 h-5 text-white" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {/* Brand */}
+          <div className="col-span-2 md:col-span-1">
+            <Link to="/" className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
+                <Ticket className="w-4 h-4 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">
-                Ticke<span className="text-indigo-400">Trust</span>
+              <span className="text-[17px] font-bold text-slate-900 dark:text-white">
+                Ticket<span className="text-indigo-600 dark:text-indigo-400">Trust</span>
               </span>
-            </div>
-            <p className="text-sm leading-relaxed">
-              Israel's most secure ticket marketplace with escrow protection and verified listings.
+            </Link>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
+              Israel's most secure ticket marketplace. Every transaction escrow-protected.
             </p>
-            <div className="flex gap-3 mt-4">
-              <div className="flex items-center gap-1 text-xs text-green-400">
-                <ShieldCheck className="w-4 h-4" />
-                Escrow
-              </div>
-              <div className="flex items-center gap-1 text-xs text-blue-400">
-                <Lock className="w-4 h-4" />
-                Encrypted
-              </div>
-              <div className="flex items-center gap-1 text-xs text-purple-400">
-                <CreditCard className="w-4 h-4" />
-                Secure Pay
-              </div>
+            <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Escrow protected · ID verified</span>
             </div>
           </div>
 
-          <div>
-            <h4 className="text-white font-semibold text-sm mb-3">Marketplace</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/marketplace" className="hover:text-white transition-colors">Browse Tickets</Link></li>
-              <li><Link to="/sell" className="hover:text-white transition-colors">Sell Tickets</Link></li>
-              <li><Link to="/buyer-dashboard" className="hover:text-white transition-colors">My Purchases</Link></li>
-              <li><Link to="/seller-dashboard" className="hover:text-white transition-colors">My Listings</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-white font-semibold text-sm mb-3">Support</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/dispute-center" className="hover:text-white transition-colors">Dispute Center</Link></li>
-              <li><Link to="/wallet" className="hover:text-white transition-colors">Wallet & Payments</Link></li>
-              <li><a href="#" className="hover:text-white transition-colors">How It Works</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Safety Guide</a></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-white font-semibold text-sm mb-3">Account</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/login" className="hover:text-white transition-colors">Sign In</Link></li>
-              <li><Link to="/register" className="hover:text-white transition-colors">Register</Link></li>
-              <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-            </ul>
-          </div>
+          {/* Link columns */}
+          {Object.entries(LINKS).map(([title, items]) => (
+            <div key={title}>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">{title}</h4>
+              <ul className="space-y-2">
+                {items.map(item => (
+                  <li key={item.label}>
+                    <Link
+                      to={item.to}
+                      className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        <div className="border-t border-slate-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
-          <p>© 2024 TickeTrust. All rights reserved. Licensed in Israel.</p>
-          <p className="text-slate-500">Secure ticket exchange powered by escrow technology</p>
+        <div className="mt-10 pt-6 border-t border-slate-100 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-xs text-slate-400 dark:text-slate-500">© 2025 TicketTrust. All rights reserved.</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">Secure ticket exchange · Licensed in Israel</p>
         </div>
       </div>
     </footer>

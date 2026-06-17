@@ -1,174 +1,187 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ShieldCheck, Star, MapPin, Calendar, Ticket, ArrowLeft, CheckCircle, Lock, Users } from 'lucide-react';
+import { ShieldCheck, Star, MapPin, Calendar, Ticket, ArrowLeft, CheckCircle, Lock, Users, Zap } from 'lucide-react';
 
-const tickets: Record<string, {
-  id: string; category: string; name: string; date: string; venue: string; city: string;
-  price: number; originalPrice: number; seller: string; sellerRating: number; sellerReviews: number;
-  sellerSince: string; available: number; section: string; row: string; description: string;
+const TICKETS: Record<string, {
+  id: string; category: string; name: string; date: string; month: string; day: string;
+  venue: string; city: string; price: number; originalPrice: number; discount: number;
+  seller: string; sellerRating: number; sellerReviews: number; sellerSince: string;
+  available: number; section: string; row: string; description: string; instant: boolean;
+  gradient: string;
 }> = {
-  '1': {
-    id: '1', category: 'Concert', name: 'Tel Aviv Music Festival', date: 'December 15, 2024', venue: 'Yarkon Park',
-    city: 'Tel Aviv', price: 280, originalPrice: 350, seller: 'Yossi M.', sellerRating: 4.9,
-    sellerReviews: 124, sellerSince: '2022', available: 12, section: 'GA Floor',
-    row: 'N/A', description: 'Official tickets for the Tel Aviv Music Festival main stage. GA floor access with great view. Digital tickets transferred instantly upon payment.',
-  },
-  '2': {
-    id: '2', category: 'Sports', name: 'Maccabi TLV vs Hapoel Jerusalem', date: 'December 18, 2024',
-    venue: 'Bloomfield Stadium', city: 'Tel Aviv', price: 95, originalPrice: 120, seller: 'Dana K.',
-    sellerRating: 4.7, sellerReviews: 56, sellerSince: '2023', available: 8, section: 'East Stand',
-    row: 'F', description: 'Great seats in the East Stand, Row F. Home team section. Digital barcode tickets.',
-  },
-  '3': {
-    id: '3', category: 'Theater', name: 'Jerusalem Ballet Gala', date: 'December 20, 2024',
-    venue: 'Khan Theatre', city: 'Jerusalem', price: 185, originalPrice: 185, seller: 'Avi S.',
-    sellerRating: 5.0, sellerReviews: 33, sellerSince: '2021', available: 5, section: 'Stalls',
-    row: 'C', description: 'Premium stall seats for the Jerusalem Ballet Gala performance.',
-  },
+  '1': { id: '1', category: 'Concert', name: 'Tel Aviv Music Festival', date: 'March 22, 2025', month: 'Mar', day: '22', venue: 'Yarkon Park', city: 'Tel Aviv', price: 280, originalPrice: 340, discount: 17, seller: 'Yossi M.', sellerRating: 4.9, sellerReviews: 124, sellerSince: '2022', available: 12, section: 'GA Floor', row: 'N/A', description: 'Official tickets for the Tel Aviv Music Festival main stage. GA floor access with great views. Digital tickets transferred instantly upon payment confirmation.', instant: true, gradient: 'from-violet-950 via-purple-900 to-indigo-950' },
+  '2': { id: '2', category: 'Comedy', name: 'Gad Elbaz Stand-Up Special', date: 'March 29, 2025', month: 'Mar', day: '29', venue: 'Zappa Herzliya', city: 'Herzliya', price: 150, originalPrice: 180, discount: 17, seller: 'Dana K.', sellerRating: 4.7, sellerReviews: 56, sellerSince: '2023', available: 2, section: 'Floor', row: '2', description: 'Great floor seats for the Gad Elbaz stand-up special. Row 2, very close to the stage. Digital barcode tickets.', instant: false, gradient: 'from-yellow-900 via-amber-800 to-orange-950' },
+  '3': { id: '3', category: 'Theater', name: 'Habima Theater – The Dybbuk', date: 'March 8, 2025', month: 'Mar', day: '8', venue: 'Habima National Theatre', city: 'Tel Aviv', price: 250, originalPrice: 260, discount: 4, seller: 'Avi S.', sellerRating: 5.0, sellerReviews: 33, sellerSince: '2021', available: 5, section: 'Stalls', row: 'C', description: 'Premium stall seats for the Habima production of The Dybbuk. Row C, center. Classic Israeli theater experience.', instant: true, gradient: 'from-rose-950 via-red-900 to-pink-950' },
+  '4': { id: '4', category: 'Festival', name: 'InDNegev Festival 2025', date: 'April 3, 2025', month: 'Apr', day: '3', venue: 'Negev Desert', city: 'Beer Sheva', price: 320, originalPrice: 390, discount: 18, seller: 'Michal L.', sellerRating: 4.8, sellerReviews: 89, sellerSince: '2022', available: 6, section: 'General', row: 'N/A', description: "Weekend festival pass for InDNegev 2025. One of Israel's biggest outdoor festivals. Camping access included.", instant: false, gradient: 'from-orange-950 via-amber-900 to-yellow-950' },
+  '5': { id: '5', category: 'Sports', name: 'Maccabi Tel Aviv vs Real Madrid', date: 'March 15, 2025', month: 'Mar', day: '15', venue: 'Menora Mivtachim Arena', city: 'Tel Aviv', price: 195, originalPrice: 195, discount: 0, seller: 'Roni B.', sellerRating: 4.9, sellerReviews: 201, sellerSince: '2020', available: 4, section: 'Block A', row: '12', description: 'Euroleague matchup — Maccabi TLV vs Real Madrid. Block A, Row 12. Electric atmosphere guaranteed. Digital tickets.', instant: true, gradient: 'from-emerald-950 via-green-900 to-teal-950' },
 };
 
 export default function TicketDetailsPage() {
   const { id } = useParams<{ id: string }>();
-  const ticket = tickets[id ?? ''] ?? tickets['1'];
+  const ticket = TICKETS[id ?? ''] ?? TICKETS['1'];
   const [qty, setQty] = useState(1);
+  const fee = Math.round(ticket.price * qty * 0.05);
+  const total = ticket.price * qty + fee;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Link to="/marketplace" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-6">
-        <ArrowLeft className="w-4 h-4" />
-        Back to Marketplace
-      </Link>
+    <div className="bg-white dark:bg-zinc-950 min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Info */}
-        <div className="lg:col-span-2 space-y-5">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-purple-100 text-purple-700">
-                {ticket.category}
-              </span>
-              <span className="flex items-center gap-1 text-xs text-green-600">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                Verified Listing
-              </span>
-            </div>
+        <Link to="/marketplace" className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-8 transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Marketplace
+        </Link>
 
-            <h1 className="text-2xl font-bold text-slate-900 mb-4">{ticket.name}</h1>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            <div className="space-y-3 mb-6">
-              <div className="flex items-center gap-2 text-slate-600">
-                <Calendar className="w-5 h-5 text-indigo-500" />
-                <span>{ticket.date}</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-600">
-                <MapPin className="w-5 h-5 text-indigo-500" />
-                <span>{ticket.venue}, {ticket.city}</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-600">
-                <Ticket className="w-5 h-5 text-indigo-500" />
-                <span>Section: {ticket.section} · Row: {ticket.row}</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-600">
-                <Users className="w-5 h-5 text-indigo-500" />
-                <span>{ticket.available} tickets available</span>
-              </div>
-            </div>
+          {/* Left column */}
+          <div className="lg:col-span-2 space-y-4">
 
-            <div className="border-t border-slate-100 pt-5">
-              <h3 className="font-semibold text-slate-900 mb-2">About this listing</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">{ticket.description}</p>
-            </div>
-          </div>
-
-          {/* Seller Info */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <h3 className="font-semibold text-slate-900 mb-4">About the Seller</h3>
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-xl font-bold text-indigo-600 flex-shrink-0">
-                {ticket.seller[0]}
+            {/* Hero card */}
+            <div className={`relative h-56 rounded-2xl overflow-hidden bg-linear-to-br ${ticket.gradient}`}>
+              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="absolute top-4 right-4 text-center bg-black/30 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10">
+                <div className="text-[10px] font-bold text-white/60 uppercase tracking-widest">{ticket.month}</div>
+                <div className="text-2xl font-black text-white leading-none">{ticket.day}</div>
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-slate-900">{ticket.seller}</span>
-                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" /> ID Verified
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-bold text-white/70 bg-white/10 border border-white/10 px-2 py-0.5 rounded-md">{ticket.category}</span>
+                  <span className="flex items-center gap-1 text-xs text-emerald-400 font-semibold">
+                    <ShieldCheck className="w-3 h-3" /> Verified Listing
                   </span>
+                  {ticket.instant && (
+                    <span className="flex items-center gap-1 text-xs text-yellow-300 font-semibold">
+                      <Zap className="w-3 h-3" /> Instant Transfer
+                    </span>
+                  )}
                 </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="flex items-center gap-0.5">
-                    {[1,2,3,4,5].map(i => (
-                      <Star key={i} className={`w-3.5 h-3.5 ${i <= Math.round(ticket.sellerRating) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
-                    ))}
+                <h1 className="text-2xl font-bold text-white">{ticket.name}</h1>
+              </div>
+            </div>
+
+            {/* Details card */}
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-white/5 p-6">
+              <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Event details</h2>
+              <div className="space-y-3">
+                {[
+                  { icon: Calendar, label: ticket.date },
+                  { icon: MapPin, label: `${ticket.venue}, ${ticket.city}` },
+                  { icon: Ticket, label: `Section: ${ticket.section} · Row: ${ticket.row}` },
+                  { icon: Users, label: `${ticket.available} tickets available` },
+                ].map(({ icon: Icon, label }) => (
+                  <div key={label} className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
+                    <Icon className="w-4 h-4 text-indigo-500 shrink-0" />
+                    {label}
                   </div>
-                  <span className="text-sm font-medium text-slate-700">{ticket.sellerRating}</span>
-                  <span className="text-xs text-slate-400">({ticket.sellerReviews} reviews)</span>
-                </div>
-                <p className="text-xs text-slate-500 mt-1">Member since {ticket.sellerSince}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Guarantee */}
-          <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-5">
-            <h3 className="font-semibold text-indigo-900 mb-3 flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-indigo-600" />
-              TickeTrust Buyer Guarantee
-            </h3>
-            <ul className="space-y-2 text-sm text-indigo-700">
-              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4" /> Payment held in escrow until tickets received</li>
-              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4" /> Full refund if tickets are invalid or not delivered</li>
-              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4" /> 24/7 dispute resolution support</li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Purchase Card */}
-        <div className="lg:sticky lg:top-24 h-fit">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-3xl font-bold text-indigo-600">₪{ticket.price}</span>
-              {ticket.originalPrice > ticket.price && (
-                <span className="text-sm text-slate-400 line-through">₪{ticket.originalPrice}</span>
-              )}
-            </div>
-            <p className="text-xs text-slate-500 mb-5">per ticket · escrow protected</p>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Quantity</label>
-              <select
-                value={qty}
-                onChange={e => setQty(Number(e.target.value))}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                {Array.from({ length: Math.min(ticket.available, 8) }, (_, i) => i + 1).map(n => (
-                  <option key={n} value={n}>{n} ticket{n > 1 ? 's' : ''}</option>
                 ))}
-              </select>
-            </div>
-
-            <div className="bg-slate-50 rounded-xl p-3 mb-4 space-y-1">
-              <div className="flex justify-between text-sm text-slate-600">
-                <span>₪{ticket.price} × {qty}</span>
-                <span>₪{ticket.price * qty}</span>
               </div>
-              <div className="flex justify-between text-sm text-slate-600">
-                <span>Service fee</span>
-                <span>₪{Math.round(ticket.price * qty * 0.05)}</span>
-              </div>
-              <hr className="border-slate-200" />
-              <div className="flex justify-between font-bold text-slate-900">
-                <span>Total</span>
-                <span>₪{Math.round(ticket.price * qty * 1.05)}</span>
+              <div className="mt-5 pt-5 border-t border-slate-100 dark:border-white/5">
+                <h3 className="font-semibold text-slate-900 dark:text-white text-sm mb-2">About this listing</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{ticket.description}</p>
               </div>
             </div>
 
-            <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-xl transition-colors mb-3">
-              Buy Now — Escrow Protected
-            </button>
+            {/* Seller card */}
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-white/5 p-6">
+              <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Seller</h2>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-xl font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
+                  {ticket.seller[0]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-slate-900 dark:text-white">{ticket.seller}</span>
+                    <span className="flex items-center gap-1 text-xs bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.5 rounded-full">
+                      <CheckCircle className="w-2.5 h-2.5" /> ID Verified
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <div className="flex">
+                      {[1,2,3,4,5].map(i => (
+                        <Star key={i} className={`w-3 h-3 ${i <= Math.round(ticket.sellerRating) ? 'fill-amber-400 text-amber-400' : 'text-slate-200 dark:text-slate-700'}`} />
+                      ))}
+                    </div>
+                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{ticket.sellerRating}</span>
+                    <span className="text-xs text-slate-400">({ticket.sellerReviews} reviews)</span>
+                    <span className="text-xs text-slate-400 ml-1">· Member since {ticket.sellerSince}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-400">
-              <Lock className="w-3.5 h-3.5" />
-              256-bit encrypted · 100% secure checkout
+            {/* Guarantee */}
+            <div className="bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <h3 className="font-semibold text-indigo-900 dark:text-indigo-300 text-sm">TicketTrust Buyer Guarantee</h3>
+              </div>
+              <ul className="space-y-2">
+                {[
+                  'Payment held in escrow until tickets received',
+                  'Full refund if tickets are invalid or not delivered',
+                  '24/7 dispute resolution support',
+                ].map(item => (
+                  <li key={item} className="flex items-start gap-2 text-sm text-indigo-700 dark:text-indigo-300">
+                    <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Purchase card */}
+          <div className="lg:sticky lg:top-24 h-fit">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-white/5 p-6">
+              <div className="flex items-baseline gap-2 mb-0.5">
+                <span className="text-3xl font-bold text-slate-900 dark:text-white">₪{ticket.price}</span>
+                {ticket.discount > 0 && (
+                  <>
+                    <span className="text-sm text-slate-400 line-through">₪{ticket.originalPrice}</span>
+                    <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">-{ticket.discount}%</span>
+                  </>
+                )}
+              </div>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mb-5">per ticket · escrow protected</p>
+
+              <div className="mb-4">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Quantity</label>
+                <select
+                  value={qty}
+                  onChange={e => setQty(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  {Array.from({ length: Math.min(ticket.available, 8) }, (_, i) => i + 1).map(n => (
+                    <option key={n} value={n}>{n} ticket{n > 1 ? 's' : ''}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Price breakdown */}
+              <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-xl p-3.5 mb-4 space-y-2">
+                <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400">
+                  <span>₪{ticket.price} × {qty}</span>
+                  <span>₪{ticket.price * qty}</span>
+                </div>
+                <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400">
+                  <span>Service fee (5%)</span>
+                  <span>₪{fee}</span>
+                </div>
+                <div className="border-t border-slate-200 dark:border-white/10 pt-2 flex justify-between font-bold text-slate-900 dark:text-white">
+                  <span>Total</span>
+                  <span>₪{total}</span>
+                </div>
+              </div>
+
+              <button className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold py-3 rounded-xl transition-colors mb-3 text-sm">
+                Buy now — escrow protected
+              </button>
+
+              <div className="flex items-center justify-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+                <Lock className="w-3 h-3" />
+                256-bit encrypted · 100% secure
+              </div>
             </div>
           </div>
         </div>

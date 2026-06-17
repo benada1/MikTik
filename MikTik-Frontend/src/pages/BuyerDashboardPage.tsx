@@ -1,164 +1,101 @@
 import { Link } from 'react-router-dom';
-import { Ticket, ShieldCheck, Clock, CheckCircle, XCircle, Star, Download, AlertCircle } from 'lucide-react';
+import { Ticket, ShieldCheck, Clock, CheckCircle, XCircle, Download, AlertCircle, ArrowRight } from 'lucide-react';
 
-const purchases = [
-  {
-    id: 'TT-1001',
-    event: 'Tel Aviv Music Festival',
-    date: 'Dec 15, 2024',
-    venue: 'Yarkon Park',
-    seller: 'Yossi M.',
-    sellerRating: 4.9,
-    price: 280,
-    qty: 2,
-    status: 'confirmed',
-    escrow: 'released',
-  },
-  {
-    id: 'TT-1002',
-    event: 'Maccabi TLV vs Hapoel',
-    date: 'Dec 18, 2024',
-    venue: 'Bloomfield Stadium',
-    seller: 'Dana K.',
-    sellerRating: 4.7,
-    price: 95,
-    qty: 1,
-    status: 'pending',
-    escrow: 'held',
-  },
-  {
-    id: 'TT-1003',
-    event: 'Omer Adam Tour',
-    date: 'Jan 20, 2025',
-    venue: 'Caesarea Amphitheatre',
-    seller: 'Lior D.',
-    sellerRating: 4.8,
-    price: 310,
-    qty: 2,
-    status: 'transfer',
-    escrow: 'held',
-  },
+const PURCHASES = [
+  { id: 'ORD-001', event: 'Tel Aviv Music Festival', date: 'Dec 15, 2024', venue: 'Yarkon Park', qty: 2, total: 616, status: 'confirmed', ticketId: '1' },
+  { id: 'ORD-002', event: 'Maccabi TLV vs Real Madrid', date: 'Mar 15, 2025', venue: 'Menora Mivtachim Arena', qty: 1, total: 205, status: 'pending', ticketId: '5' },
+  { id: 'ORD-003', event: 'Habima Theater – The Dybbuk', date: 'Mar 8, 2025', venue: 'Habima National Theatre', qty: 2, total: 525, status: 'confirmed', ticketId: '3' },
+  { id: 'ORD-004', event: 'InDNegev Festival 2025', date: 'Apr 3, 2025', venue: 'Negev Desert', qty: 1, total: 336, status: 'cancelled', ticketId: '4' },
 ];
 
-const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  confirmed: { label: 'Confirmed', color: 'bg-green-100 text-green-700', icon: <CheckCircle className="w-4 h-4" /> },
-  pending: { label: 'Pending Transfer', color: 'bg-yellow-100 text-yellow-700', icon: <Clock className="w-4 h-4" /> },
-  transfer: { label: 'In Transfer', color: 'bg-blue-100 text-blue-700', icon: <ShieldCheck className="w-4 h-4" /> },
-  cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-700', icon: <XCircle className="w-4 h-4" /> },
+const STATUS_CONFIG = {
+  confirmed: { label: 'Confirmed', icon: CheckCircle, classes: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' },
+  pending:   { label: 'Pending',   icon: Clock,         classes: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800' },
+  cancelled: { label: 'Cancelled', icon: XCircle,       classes: 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800' },
 };
 
-const stats = [
-  { label: 'Total Purchases', value: '3', icon: <Ticket className="w-5 h-5 text-indigo-600" /> },
-  { label: 'Confirmed Tickets', value: '2', icon: <CheckCircle className="w-5 h-5 text-green-600" /> },
-  { label: 'Escrow Protected', value: '₪810', icon: <ShieldCheck className="w-5 h-5 text-blue-600" /> },
-  { label: 'Total Spent', value: '₪1,090', icon: <Star className="w-5 h-5 text-amber-500" /> },
-];
-
 export default function BuyerDashboardPage() {
+  const confirmed = PURCHASES.filter(p => p.status === 'confirmed').length;
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">My Tickets</h1>
-          <p className="text-slate-500 text-sm mt-1">Welcome back, Yossi 👋</p>
-        </div>
-        <Link
-          to="/marketplace"
-          className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
-        >
-          Browse Marketplace
-        </Link>
-      </div>
+    <div className="bg-white dark:bg-zinc-950 min-h-screen">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {stats.map(s => (
-          <div key={s.label} className="bg-white rounded-2xl border border-slate-200 p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="bg-slate-50 p-2 rounded-lg">{s.icon}</div>
-            </div>
-            <div className="text-2xl font-bold text-slate-900">{s.value}</div>
-            <div className="text-xs text-slate-500 mt-0.5">{s.label}</div>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">My Tickets</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Your purchases and order history</p>
           </div>
-        ))}
-      </div>
+          <Link to="/marketplace" className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+            Browse tickets <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
 
-      {/* Escrow Notice */}
-      <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 mb-6 flex items-start gap-3">
-        <ShieldCheck className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-medium text-indigo-900">Your funds are protected</p>
-          <p className="text-xs text-indigo-700 mt-0.5">
-            ₪810 is held in escrow for pending transactions. Funds release automatically once you confirm ticket receipt.
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+          {[
+            { label: 'Total orders', value: PURCHASES.length },
+            { label: 'Confirmed', value: confirmed },
+            { label: 'Pending', value: PURCHASES.filter(p => p.status === 'pending').length },
+            { label: 'Total spent', value: `₪${PURCHASES.filter(p => p.status !== 'cancelled').reduce((s, p) => s + p.total, 0)}` },
+          ].map(s => (
+            <div key={s.label} className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-4">
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{s.value}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Escrow notice */}
+        <div className="flex items-center gap-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-4 mb-6">
+          <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+          <p className="text-sm text-indigo-700 dark:text-indigo-300">
+            All payments are held in escrow and released to sellers only after you confirm receipt.
           </p>
         </div>
-      </div>
 
-      {/* Purchases Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="font-semibold text-slate-900">Purchase History</h2>
-          <span className="text-xs text-slate-400">{purchases.length} orders</span>
-        </div>
-
-        <div className="divide-y divide-slate-100">
-          {purchases.map(p => {
-            const status = statusConfig[p.status];
+        {/* Orders */}
+        <div className="space-y-3">
+          {PURCHASES.map(order => {
+            const cfg = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG];
+            const StatusIcon = cfg.icon;
             return (
-              <div key={p.id} className="px-6 py-5 hover:bg-slate-50 transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono text-slate-400">{p.id}</span>
-                      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${status.color}`}>
-                        {status.icon}
-                        {status.label}
-                      </span>
-                      {p.escrow === 'held' && (
-                        <span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                          <ShieldCheck className="w-3 h-3" /> Escrow
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="font-semibold text-slate-900 truncate">{p.event}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">{p.date} · {p.venue}</p>
-                    <div className="flex items-center gap-1.5 mt-1.5">
-                      <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
-                        {p.seller[0]}
-                      </div>
-                      <span className="text-xs text-slate-600">{p.seller}</span>
-                      <div className="flex items-center gap-0.5">
-                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                        <span className="text-xs text-slate-500">{p.sellerRating}</span>
-                      </div>
-                    </div>
+              <div key={order.id} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-500/20 rounded-xl flex items-center justify-center shrink-0">
+                    <Ticket className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                   </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className="font-bold text-slate-900">₪{p.price * p.qty}</div>
-                      <div className="text-xs text-slate-400">{p.qty}x ₪{p.price}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
+                      <div>
+                        <h3 className="font-semibold text-slate-900 dark:text-white text-sm">{order.event}</h3>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{order.date} · {order.venue}</p>
+                      </div>
+                      <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.classes}`}>
+                        <StatusIcon className="w-3 h-3" />
+                        {cfg.label}
+                      </span>
                     </div>
-                    <div className="flex gap-2">
-                      {p.status === 'confirmed' && (
-                        <button className="flex items-center gap-1 text-xs text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors">
-                          <Download className="w-3.5 h-3.5" />
-                          Tickets
-                        </button>
-                      )}
-                      {p.status === 'transfer' && (
-                        <button className="flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors">
-                          <CheckCircle className="w-3.5 h-3.5" />
-                          Confirm Receipt
-                        </button>
-                      )}
-                      {p.status === 'pending' && (
-                        <Link to="/dispute-center" className="flex items-center gap-1 text-xs text-orange-700 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-lg hover:bg-orange-100 transition-colors">
-                          <AlertCircle className="w-3.5 h-3.5" />
-                          Issue?
-                        </Link>
-                      )}
+
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-white/5">
+                      <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                        <span>{order.id}</span>
+                        <span>{order.qty} ticket{order.qty > 1 ? 's' : ''}</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">₪{order.total}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {order.status === 'confirmed' && (
+                          <button className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors">
+                            <Download className="w-3.5 h-3.5" /> Download
+                          </button>
+                        )}
+                        {order.status === 'pending' && (
+                          <button className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 font-medium transition-colors">
+                            <AlertCircle className="w-3.5 h-3.5" /> View escrow
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

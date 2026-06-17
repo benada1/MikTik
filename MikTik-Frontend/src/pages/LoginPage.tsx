@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Ticket, Eye, EyeOff, ShieldCheck, Lock } from 'lucide-react';
+import { Eye, EyeOff, ShieldCheck, Ticket } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { Sun, Moon } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { theme, toggle } = useTheme();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,87 +18,112 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 bg-slate-50">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="bg-indigo-600 p-1.5 rounded-lg">
-              <Ticket className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-slate-900">
-              Ticke<span className="text-indigo-600">Trust</span>
-            </span>
-          </Link>
-          <h1 className="text-2xl font-bold text-slate-900">Welcome back</h1>
-          <p className="text-slate-500 mt-1 text-sm">Sign in to your account</p>
+    <div className="min-h-screen flex bg-white dark:bg-zinc-950">
+      {/* Left panel */}
+      <div className="hidden lg:flex lg:w-1/2 bg-linear-to-br from-indigo-600 to-violet-700 relative overflow-hidden flex-col justify-between p-12">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-black/10 rounded-full translate-y-1/2 -translate-x-1/2" />
         </div>
-
-        <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-sm font-medium text-slate-700">Password</label>
-                <Link to="/forgot-password" className="text-xs text-indigo-600 hover:text-indigo-700">
-                  Forgot password?
-                </Link>
+        <Link to="/" className="flex items-center gap-2 relative z-10">
+          <div className="w-8 h-8 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
+            <Ticket className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-white font-bold text-[17px]">TicketTrust</span>
+        </Link>
+        <div className="relative z-10">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Trade tickets<br />with confidence
+          </h2>
+          <p className="text-indigo-200 mb-8 leading-relaxed">
+            Every transaction is escrow-protected. Your money stays safe until you confirm receipt of your tickets.
+          </p>
+          <div className="space-y-3">
+            {['50,000+ verified listings', '₪0 fraud losses to date', '24/7 buyer support'].map(f => (
+              <div key={f} className="flex items-center gap-2.5 text-white/90 text-sm">
+                <ShieldCheck className="w-4 h-4 text-indigo-200" />
+                {f}
               </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type={showPass ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="w-full pl-10 pr-10 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
+            ))}
+          </div>
+        </div>
+        <p className="text-indigo-300 text-xs relative z-10">© 2025 TicketTrust. All rights reserved.</p>
+      </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
-            >
-              {loading ? 'Signing in...' : 'Sign In'}
+      {/* Right panel */}
+      <div className="flex-1 flex flex-col">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-6 sm:px-10 py-5">
+          <Link to="/" className="lg:hidden flex items-center gap-2">
+            <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
+              <Ticket className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-slate-900 dark:text-white text-[17px]">TicketTrust</span>
+          </Link>
+          <div className="lg:ml-auto flex items-center gap-3">
+            <button onClick={toggle} className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+              {theme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
             </button>
-          </form>
-
-          <div className="mt-6 text-center text-sm text-slate-500">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-medium">
-              Create one free
+            <span className="text-sm text-slate-500 dark:text-slate-400">No account?</span>
+            <Link to="/register" className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+              Sign up →
             </Link>
           </div>
         </div>
 
-        <div className="mt-6 flex items-center justify-center gap-4 text-xs text-slate-400">
-          <div className="flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-green-500" />
-            Secure login
-          </div>
-          <div className="flex items-center gap-1">
-            <Lock className="w-3.5 h-3.5 text-blue-500" />
-            256-bit encrypted
+        {/* Form */}
+        <div className="flex-1 flex items-center justify-center px-6 sm:px-10 py-8">
+          <div className="w-full max-w-sm">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Welcome back</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">Sign in to your TicketTrust account</p>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Email address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Password</label>
+                  <Link to="/forgot-password" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="w-full px-4 pr-10 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  >
+                    {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors text-sm mt-2"
+              >
+                {loading ? 'Signing in...' : 'Sign in'}
+              </button>
+            </form>
           </div>
         </div>
       </div>

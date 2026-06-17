@@ -1,20 +1,23 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Ticket, ShieldCheck, Upload, Info } from 'lucide-react';
+import { ShieldCheck, Upload, Info, CheckCircle } from 'lucide-react';
 
-const categories = ['Concert', 'Sports', 'Theater', 'Festival', 'Comedy', 'Other'];
-const cities = ['Tel Aviv', 'Jerusalem', 'Haifa', 'Caesarea', 'Beer Sheva', 'Eilat', 'Other'];
+const CATEGORIES = ['Concert', 'Sports', 'Theater', 'Festival', 'Comedy', 'Other'];
+
+const inputClass = "w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors";
+const labelClass = "block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2";
 
 export default function SellTicketPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    eventName: '', category: '', date: '', venue: '', city: '',
-    price: '', qty: '1', description: '', ticketType: 'digital',
+    event: '', category: '', date: '', venue: '', city: '',
+    section: '', row: '', qty: '1', price: '', description: '',
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const update = (field: string, val: string) => setForm(f => ({ ...f, [field]: val }));
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    setForm(f => ({ ...f, [k]: e.target.value }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,27 +27,21 @@ export default function SellTicketPage() {
 
   if (submitted) {
     return (
-      <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <div className="bg-white rounded-2xl border border-slate-200 p-10">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ShieldCheck className="w-8 h-8 text-green-600" />
+      <div className="bg-white dark:bg-zinc-950 min-h-screen flex items-center justify-center px-4">
+        <div className="text-center max-w-sm">
+          <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-5">
+            <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Listing Submitted!</h2>
-          <p className="text-slate-500 text-sm mb-6">
-            Your ticket listing is under review. It will be live within 1 hour after verification.
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Listing submitted!</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
+            Your ticket listing is under review and will go live within a few minutes.
           </p>
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={() => { setSubmitted(false); setForm({ eventName: '', category: '', date: '', venue: '', city: '', price: '', qty: '1', description: '', ticketType: 'digital' }); }}
-              className="text-sm font-medium text-indigo-600 border border-indigo-200 px-4 py-2.5 rounded-xl hover:bg-indigo-50 transition-colors"
-            >
-              List Another
+          <div className="flex flex-col gap-3">
+            <button onClick={() => navigate('/seller-dashboard')} className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold text-sm transition-colors">
+              View my listings
             </button>
-            <button
-              onClick={() => navigate('/seller-dashboard')}
-              className="text-sm font-medium text-white bg-indigo-600 px-4 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors"
-            >
-              View Dashboard
+            <button onClick={() => { setSubmitted(false); setForm({ event: '', category: '', date: '', venue: '', city: '', section: '', row: '', qty: '1', price: '', description: '' }); }} className="w-full py-3 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-colors hover:bg-slate-200 dark:hover:bg-zinc-800">
+              List another ticket
             </button>
           </div>
         </div>
@@ -53,226 +50,113 @@ export default function SellTicketPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">List Your Tickets</h1>
-        <p className="text-slate-500 text-sm mt-1">Reach thousands of verified buyers safely</p>
-      </div>
+    <div className="bg-white dark:bg-zinc-950 min-h-screen">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Sell a ticket</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">List your ticket securely. We handle escrow and payment.</p>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Event Info */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h2 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <Ticket className="w-4 h-4 text-indigo-600" />
-                Event Information
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Event Name *</label>
-                  <input
-                    type="text"
-                    value={form.eventName}
-                    onChange={e => update('eventName', e.target.value)}
-                    placeholder="e.g. Eyal Golan Live Concert"
-                    required
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                </div>
+        {/* Escrow notice */}
+        <div className="flex items-start gap-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-4 mb-8">
+          <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-300 mb-1">Seller protection included</p>
+            <p className="text-xs text-indigo-700 dark:text-indigo-400 leading-relaxed">
+              Buyers pay into escrow. Funds are released to you once they confirm receipt. Zero fraud risk.
+            </p>
+          </div>
+        </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Category *</label>
-                    <select
-                      value={form.category}
-                      onChange={e => update('category', e.target.value)}
-                      required
-                      className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700"
-                    >
-                      <option value="">Select...</option>
-                      {categories.map(c => <option key={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Event Date *</label>
-                    <input
-                      type="date"
-                      value={form.date}
-                      onChange={e => update('date', e.target.value)}
-                      required
-                      className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Venue *</label>
-                    <input
-                      type="text"
-                      value={form.venue}
-                      onChange={e => update('venue', e.target.value)}
-                      placeholder="Venue name"
-                      required
-                      className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">City *</label>
-                    <select
-                      value={form.city}
-                      onChange={e => update('city', e.target.value)}
-                      required
-                      className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700"
-                    >
-                      <option value="">Select...</option>
-                      {cities.map(c => <option key={c}>{c}</option>)}
-                    </select>
-                  </div>
-                </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Event info */}
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-6">
+            <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-5">Event information</h2>
+            <div className="space-y-4">
+              <div>
+                <label className={labelClass}>Event name</label>
+                <input type="text" value={form.event} onChange={set('event')} placeholder="e.g. Tel Aviv Music Festival" required className={inputClass} />
               </div>
-            </div>
-
-            {/* Pricing */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h2 className="font-semibold text-slate-900 mb-4">Pricing & Quantity</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Price per Ticket (₪) *</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">₪</span>
-                    <input
-                      type="number"
-                      value={form.price}
-                      onChange={e => update('price', e.target.value)}
-                      placeholder="0"
-                      required
-                      min="1"
-                      className="w-full pl-8 pr-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    />
-                  </div>
+                  <label className={labelClass}>Category</label>
+                  <select value={form.category} onChange={set('category')} required className={inputClass}>
+                    <option value="">Select category</option>
+                    {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Number of Tickets *</label>
-                  <input
-                    type="number"
-                    value={form.qty}
-                    onChange={e => update('qty', e.target.value)}
-                    min="1"
-                    max="20"
-                    required
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
+                  <label className={labelClass}>Event date</label>
+                  <input type="date" value={form.date} onChange={set('date')} required className={inputClass} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Venue</label>
+                  <input type="text" value={form.venue} onChange={set('venue')} placeholder="Yarkon Park" required className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>City</label>
+                  <input type="text" value={form.city} onChange={set('city')} placeholder="Tel Aviv" required className={inputClass} />
                 </div>
               </div>
             </div>
-
-            {/* Ticket Type */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h2 className="font-semibold text-slate-900 mb-4">Ticket Type</h2>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { val: 'digital', label: 'Digital / PDF', desc: 'Auto-transferred on sale' },
-                  { val: 'physical', label: 'Physical', desc: 'Arrange handoff with buyer' },
-                ].map(t => (
-                  <button
-                    key={t.val}
-                    type="button"
-                    onClick={() => update('ticketType', t.val)}
-                    className={`text-left p-4 rounded-xl border transition-colors ${
-                      form.ticketType === t.val
-                        ? 'border-indigo-600 bg-indigo-50'
-                        : 'border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <p className="text-sm font-medium text-slate-900">{t.label}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{t.desc}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Upload */}
-            {form.ticketType === 'digital' && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                <h2 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                  <Upload className="w-4 h-4 text-indigo-600" />
-                  Upload Tickets
-                </h2>
-                <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-indigo-300 transition-colors cursor-pointer">
-                  <Upload className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-slate-600">Drop PDF tickets here</p>
-                  <p className="text-xs text-slate-400 mt-1">or click to browse — PDF, PNG up to 10MB</p>
-                </div>
-              </div>
-            )}
-
-            {/* Description */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Additional Notes</label>
-              <textarea
-                value={form.description}
-                onChange={e => update('description', e.target.value)}
-                placeholder="Seat section, row, any special details..."
-                rows={3}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold py-3.5 rounded-xl transition-colors"
-            >
-              {loading ? 'Submitting...' : 'List Tickets for Sale'}
-            </button>
-          </form>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-4">
-          <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <ShieldCheck className="w-5 h-5 text-indigo-600" />
-              <h3 className="text-sm font-semibold text-indigo-900">Seller Protection</h3>
-            </div>
-            <ul className="space-y-2 text-xs text-indigo-700">
-              <li>✓ Funds held in escrow until buyer confirms</li>
-              <li>✓ Anti-chargeback protection</li>
-              <li>✓ Dispute mediation available</li>
-              <li>✓ Verified buyer guarantee</li>
-            </ul>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Info className="w-5 h-5 text-slate-500" />
-              <h3 className="text-sm font-semibold text-slate-900">Fee Structure</h3>
-            </div>
-            <div className="space-y-2 text-xs text-slate-600">
-              <div className="flex justify-between">
-                <span>Platform fee</span>
-                <span className="font-medium">5%</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Payment processing</span>
-                <span className="font-medium">2.5%</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Escrow service</span>
-                <span>Included</span>
-              </div>
-              <hr className="border-slate-100 my-1" />
-              {form.price && (
-                <div className="flex justify-between font-semibold text-slate-900">
-                  <span>You receive</span>
-                  <span>₪{Math.floor(Number(form.price) * 0.925)}</span>
+          {/* Ticket details */}
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-6">
+            <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-5">Ticket details</h2>
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className={labelClass}>Section</label>
+                  <input type="text" value={form.section} onChange={set('section')} placeholder="GA Floor" className={inputClass} />
                 </div>
-              )}
+                <div>
+                  <label className={labelClass}>Row</label>
+                  <input type="text" value={form.row} onChange={set('row')} placeholder="A" className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Qty</label>
+                  <select value={form.qty} onChange={set('qty')} className={inputClass}>
+                    {[1,2,3,4,5,6,7,8].map(n => <option key={n}>{n}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Price per ticket (₪)</label>
+                <input type="number" value={form.price} onChange={set('price')} placeholder="250" min="1" required className={inputClass} />
+                <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                  <Info className="w-3 h-3" /> A 5% service fee is deducted from each sale.
+                </p>
+              </div>
+              <div>
+                <label className={labelClass}>Description (optional)</label>
+                <textarea value={form.description} onChange={set('description')} rows={3} placeholder="Describe the seats, view, or any other details buyers should know..." className={`${inputClass} resize-none`} />
+              </div>
             </div>
           </div>
-        </div>
+
+          {/* Upload */}
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-6">
+            <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-2">Ticket files</h2>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">Upload your ticket files. They will be held securely and only released to the buyer after payment is confirmed.</p>
+            <label className="flex flex-col items-center justify-center gap-2 h-28 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-all">
+              <Upload className="w-6 h-6 text-slate-400" />
+              <span className="text-sm text-slate-500 dark:text-slate-400">Drop files here or <span className="text-indigo-600 dark:text-indigo-400 font-medium">click to upload</span></span>
+              <span className="text-xs text-slate-400">PDF, PNG, JPG up to 10MB</span>
+              <input type="file" accept=".pdf,.png,.jpg,.jpeg" className="hidden" multiple />
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors text-sm"
+          >
+            {loading ? 'Submitting...' : 'List ticket for sale'}
+          </button>
+        </form>
       </div>
     </div>
   );
