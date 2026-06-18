@@ -32,6 +32,10 @@ app.use('/api/purchases', purchaseRoutes);
 const sellerApplicationRoutes = require('./routes/sellerApplications');
 app.use('/api/seller-applications', sellerApplicationRoutes);
 
+// Report / dispute routes
+const reportRoutes = require('./routes/reports');
+app.use('/api/reports', reportRoutes);
+
 // Ensure Seller collection is created on startup
 require('./models/Seller');
 

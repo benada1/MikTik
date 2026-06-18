@@ -430,6 +430,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'dispute.refundIssued': 'Refund issued',
     'status.open': 'Open',
     'status.resolved': 'Resolved',
+    'status.closed': 'Closed',
 
     // Admin panel page
     'admin.title': 'Admin Panel',
@@ -891,6 +892,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'dispute.refundIssued': 'הוחזר תשלום',
     'status.open': 'פתוח',
     'status.resolved': 'נפתר',
+    'status.closed': 'סגור',
 
     // Admin panel page
     'admin.title': 'לוח ניהול',
