@@ -211,4 +211,44 @@ router.patch('/:id/reject', authMiddleware, authMiddleware.requireAdmin, async (
   }
 });
 
+// PATCH /api/seller-applications/:id/revoke — admin only
+router.patch('/:id/revoke', authMiddleware, authMiddleware.requireAdmin, async (req: any, res: any) => {
+  try {
+    const application = await SellerApplication.findById(req.params.id).populate('user', 'name email');
+    if (!application) return res.status(404).json({ error: 'Application not found' });
+    if (application.status !== 'approved') {
+      return res.status(400).json({ error: 'Can only revoke approved sellers' });
+    }
+
+    application.status = 'revoked';
+    application.reviewedAt = new Date();
+    application.rejectionReason = req.body.reason?.trim() || '';
+    await application.save();
+
+    await User.findByIdAndUpdate(application.user._id, { permissionLevel: 1 });
+
+    await Seller.findOneAndUpdate(
+      { user: application.user._id },
+      { active: false }
+    );
+
+    const reason = application.rejectionReason
+      ? ` Reason: ${application.rejectionReason}`
+      : '';
+    await Notification.create({
+      user: application.user._id,
+      type: 'seller_rejected',
+      title: 'Seller access revoked',
+      message: `Your seller access has been revoked by an admin.${reason} You may reapply if you believe this was a mistake.`,
+      link: '/become-seller',
+      relatedId: application._id,
+    });
+
+    res.json({ application });
+  } catch (err: any) {
+    console.error('Revoke error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShieldCheck, Store, CheckCircle, XCircle, ChevronRight, X } from 'lucide-react';
+import { ShieldCheck, Store, CheckCircle, XCircle, ChevronRight, X, UserX } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const API = 'http://localhost:5000/api';
@@ -20,13 +20,13 @@ interface SellerApp {
   address: Address;
   bio: string;
   idImageUrl: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'revoked';
   rejectionReason: string;
   reviewedAt: string;
   createdAt: string;
 }
 
-type Filter = 'pending' | 'approved' | 'rejected' | 'all';
+type Filter = 'pending' | 'approved' | 'rejected' | 'revoked' | 'all';
 
 export default function AdminPanelPage() {
   const [applications, setApplications] = useState<SellerApp[]>([]);
@@ -83,12 +83,29 @@ export default function AdminPanelPage() {
     }
   };
 
+  const handleRevoke = async (id: string) => {
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem('tt_token');
+      await fetch(`${API}/seller-applications/${id}/revoke`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reason: rejectReason }),
+      });
+      await fetchApplications();
+      setSelected(null);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const filtered = applications.filter(a => filter === 'all' || a.status === filter);
   const counts: Record<Filter, number> = {
     all: applications.length,
     pending: applications.filter(a => a.status === 'pending').length,
     approved: applications.filter(a => a.status === 'approved').length,
     rejected: applications.filter(a => a.status === 'rejected').length,
+    revoked: applications.filter(a => a.status === 'revoked').length,
   };
 
   const statusStyle = (s: SellerApp['status']) =>
@@ -96,6 +113,8 @@ export default function AdminPanelPage() {
       ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
       : s === 'approved'
       ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+      : s === 'revoked'
+      ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
       : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400';
 
   return (
@@ -113,7 +132,7 @@ export default function AdminPanelPage() {
 
         {/* Filter tabs */}
         <div className="flex gap-1 bg-slate-100 dark:bg-zinc-900 rounded-xl p-1 mb-6 w-fit">
-          {(['pending', 'approved', 'rejected', 'all'] as Filter[]).map(f => (
+          {(['pending', 'approved', 'rejected', 'revoked', 'all'] as Filter[]).map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -129,6 +148,7 @@ export default function AdminPanelPage() {
                   f === 'pending' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' :
                   f === 'approved' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' :
                   f === 'rejected' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' :
+                  f === 'revoked' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' :
                   'bg-slate-200 dark:bg-zinc-700 text-slate-600 dark:text-slate-400'
                 }`}>
                   {counts[f]}
@@ -286,8 +306,8 @@ export default function AdminPanelPage() {
                 </div>
               )}
 
-              {/* Rejection reason display */}
-              {selected.status === 'rejected' && selected.rejectionReason && (
+              {/* Rejection / revocation reason display */}
+              {(selected.status === 'rejected' || selected.status === 'revoked') && selected.rejectionReason && (
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-red-500 uppercase tracking-wider">{t('admin.rejectionReason')}</p>
                   <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl px-4 py-3">
@@ -322,6 +342,39 @@ export default function AdminPanelPage() {
                       <XCircle className="w-4 h-4" /> {t('admin.reject')}
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* Restore — revoked sellers only */}
+              {selected.status === 'revoked' && (
+                <div className="pt-4 border-t border-slate-100 dark:border-white/5">
+                  <button
+                    onClick={() => handleApprove(selected._id)}
+                    disabled={actionLoading}
+                    className="w-full flex items-center justify-center gap-1.5 py-3 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl text-sm font-semibold hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors disabled:opacity-60"
+                  >
+                    <CheckCircle className="w-4 h-4" /> {t('admin.restoreSeller')}
+                  </button>
+                </div>
+              )}
+
+              {/* Revoke — approved sellers only */}
+              {selected.status === 'approved' && (
+                <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-white/5">
+                  <textarea
+                    value={rejectReason}
+                    onChange={e => setRejectReason(e.target.value)}
+                    placeholder={t('admin.revokeReasonPlaceholder')}
+                    rows={2}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                  />
+                  <button
+                    onClick={() => handleRevoke(selected._id)}
+                    disabled={actionLoading}
+                    className="w-full flex items-center justify-center gap-1.5 py-3 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl text-sm font-semibold hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors disabled:opacity-60"
+                  >
+                    <UserX className="w-4 h-4" /> {t('admin.revoke')}
+                  </button>
                 </div>
               )}
             </div>

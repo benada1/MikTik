@@ -26,7 +26,7 @@ const sellerApplicationSchema = new mongoose.Schema(
     // Review
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
+      enum: ['pending', 'approved', 'rejected', 'revoked'],
       default: 'pending',
     },
     reviewedAt: { type: Date },
