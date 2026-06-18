@@ -9,12 +9,13 @@ const purchaseSchema = new mongoose.Schema(
     fee: { type: Number, required: true },
     totalPaid: { type: Number, required: true },
     status: { type: String, enum: ['pending', 'confirmed', 'cancelled'], default: 'confirmed' },
+    orderNumber: { type: String, index: true, sparse: true },
   },
   { timestamps: true, toJSON: { virtuals: true } }
 );
 
 purchaseSchema.virtual('orderId').get(function (this: any) {
-  return `ORD-${this._id.toString().slice(-6).toUpperCase()}`;
+  return this.orderNumber || `ORD-${this._id.toString().slice(-6).toUpperCase()}`;
 });
 
 module.exports = mongoose.model('Purchase', purchaseSchema);

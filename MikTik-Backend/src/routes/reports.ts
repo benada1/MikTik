@@ -1,23 +1,41 @@
 const express = require('express');
 const Report = require('../models/Report');
+const Purchase = require('../models/Purchase');
 const authMiddleware = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// POST /api/reports — create a report (any authenticated user)
+// POST /api/reports — create a report tied to a real order
 router.post('/', authMiddleware, async (req: any, res: any) => {
   try {
-    const { orderId, eventName, reason } = req.body;
+    const { orderId, reason } = req.body;
     if (!orderId?.trim() || !reason?.trim()) {
       return res.status(400).json({ error: 'orderId and reason are required' });
     }
+
+    const purchase = await Purchase.findOne({
+      orderNumber: orderId.trim().toUpperCase(),
+      buyer: req.user.id,
+    }).populate('ticket', 'name');
+
+    if (!purchase) {
+      return res.status(400).json({ error: 'No order with that ID found on your account' });
+    }
+
+    const existing = await Report.findOne({ purchase: purchase._id, status: { $ne: 'closed' } });
+    if (existing) {
+      return res.status(400).json({ error: 'An open report already exists for this order' });
+    }
+
     const report = await Report.create({
       user: req.user.id,
-      orderId: orderId.trim(),
-      eventName: eventName?.trim() || '',
+      purchase: purchase._id,
+      orderId: purchase.orderNumber,
+      eventName: purchase.ticket?.name || '',
       reason: reason.trim(),
     });
+
     res.status(201).json({ report });
   } catch (err: any) {
     console.error('Report create error:', err);
@@ -47,7 +65,7 @@ router.get('/', authMiddleware, requireAdmin, async (req: any, res: any) => {
   }
 });
 
-// PATCH /api/reports/:id/status — admin: update status (and optional adminNote)
+// PATCH /api/reports/:id/status — admin: update status and optional adminNote
 router.patch('/:id/status', authMiddleware, requireAdmin, async (req: any, res: any) => {
   try {
     const { status, adminNote } = req.body;

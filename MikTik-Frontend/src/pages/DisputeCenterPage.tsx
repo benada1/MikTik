@@ -5,6 +5,15 @@ import { useAuth } from '../context/AuthContext';
 
 const API = 'http://localhost:5000/api';
 
+interface Purchase {
+  id: string;
+  orderId: string;
+  orderNumber: string;
+  ticket: { name: string; date: string } | null;
+  totalPaid: number;
+  createdAt: string;
+}
+
 interface Report {
   _id: string;
   orderId: string;
@@ -18,10 +27,10 @@ interface Report {
 
 export default function DisputeCenterPage() {
   const [reports, setReports] = useState<Report[]>([]);
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
-  const [orderId, setOrderId] = useState('');
-  const [eventName, setEventName] = useState('');
+  const [selectedOrderId, setSelectedOrderId] = useState('');
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
@@ -36,24 +45,35 @@ export default function DisputeCenterPage() {
     closed:  { label: t('status.closed'),  icon: CheckCircle,   classes: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' },
   };
 
-  const fetchReports = () => {
-    const token = localStorage.getItem('tt_token');
-    const endpoint = isAdmin ? `${API}/reports` : `${API}/reports/my`;
-    fetch(endpoint, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
-      .then(r => r.json())
-      .then(data => setReports(data.reports || []))
-      .catch(() => setReports([]))
-      .finally(() => setLoading(false));
-  };
-
   useEffect(() => {
-    if (user) fetchReports();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!user) return;
+    const token = localStorage.getItem('tt_token');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const reportsUrl = isAdmin ? `${API}/reports` : `${API}/reports/my`;
+
+    Promise.all([
+      fetch(reportsUrl, { headers }).then(r => r.json()),
+      isAdmin ? Promise.resolve({ purchases: [] }) : fetch(`${API}/purchases/my`, { headers }).then(r => r.json()),
+    ])
+      .then(([reportsData, purchasesData]) => {
+        setReports(reportsData.reports || []);
+        setPurchases(purchasesData.purchases || []);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [user]);
 
+  const openForm = () => {
+    setShowNew(true);
+    setSelectedOrderId('');
+    setReason('');
+    setFormError('');
+  };
+
   const handleSubmit = async () => {
-    if (!orderId.trim() || !reason.trim()) {
-      setFormError('Order ID and reason are required.');
+    if (!selectedOrderId || !reason.trim()) {
+      setFormError('Please select an order and describe the issue.');
       return;
     }
     setSubmitting(true);
@@ -63,14 +83,11 @@ export default function DisputeCenterPage() {
       const res = await fetch(`${API}/reports`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ orderId, eventName, reason }),
+        body: JSON.stringify({ orderId: selectedOrderId, reason }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to submit');
       setReports(prev => [data.report, ...prev]);
-      setOrderId('');
-      setEventName('');
-      setReason('');
       setShowNew(false);
     } catch (e: any) {
       setFormError(e.message);
@@ -88,7 +105,6 @@ export default function DisputeCenterPage() {
     });
     if (res.ok) {
       const data = await res.json();
-      // When admin closes a report, remove it from their view immediately
       if (isAdmin && status === 'closed') {
         setReports(prev => prev.filter(r => r._id !== id));
       } else {
@@ -96,6 +112,11 @@ export default function DisputeCenterPage() {
       }
     }
   };
+
+  const ordersWithoutOpenReport = purchases.filter(p => {
+    const orderNum = p.orderNumber || p.orderId;
+    return !reports.some(r => r.orderId === orderNum && r.status !== 'closed');
+  });
 
   return (
     <div className="bg-white dark:bg-zinc-950 min-h-screen">
@@ -109,7 +130,7 @@ export default function DisputeCenterPage() {
           </div>
           {!isAdmin && (
             <button
-              onClick={() => setShowNew(v => !v)}
+              onClick={openForm}
               className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-sm font-semibold rounded-xl transition-colors"
             >
               <Plus className="w-4 h-4" /> {t('dispute.newDispute')}
@@ -126,13 +147,13 @@ export default function DisputeCenterPage() {
           </div>
         </div>
 
-        {/* New dispute form (users only) */}
+        {/* New dispute form */}
         {showNew && !isAdmin && (
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-5 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-slate-900 dark:text-white text-sm">{t('dispute.openNewTitle')}</h2>
               <button
-                onClick={() => { setShowNew(false); setFormError(''); }}
+                onClick={() => setShowNew(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
               >
                 <X className="w-4 h-4" />
@@ -141,27 +162,38 @@ export default function DisputeCenterPage() {
             {formError && <p className="text-xs text-red-500 mb-3">{formError}</p>}
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('dispute.orderId')}</label>
-                <input
-                  type="text"
-                  value={orderId}
-                  onChange={e => setOrderId(e.target.value)}
-                  placeholder="ORD-XXX"
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                />
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+                  {t('dispute.orderId')}
+                </label>
+                {ordersWithoutOpenReport.length === 0 ? (
+                  <p className="text-sm text-slate-400 dark:text-slate-500 py-2">
+                    No eligible orders found. You can only dispute confirmed purchases.
+                  </p>
+                ) : (
+                  <select
+                    value={selectedOrderId}
+                    onChange={e => setSelectedOrderId(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  >
+                    <option value="">Select an order…</option>
+                    {ordersWithoutOpenReport.map(p => {
+                      const orderNum = p.orderNumber || p.orderId;
+                      const label = p.ticket?.name
+                        ? `${orderNum} — ${p.ticket.name}`
+                        : orderNum;
+                      return (
+                        <option key={p.id} value={orderNum}>
+                          {label} · ₪{p.totalPaid}
+                        </option>
+                      );
+                    })}
+                  </select>
+                )}
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Event Name (optional)</label>
-                <input
-                  type="text"
-                  value={eventName}
-                  onChange={e => setEventName(e.target.value)}
-                  placeholder="e.g. Maccabi TLV vs Real Madrid"
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('dispute.reason')}</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+                  {t('dispute.reason')}
+                </label>
                 <textarea
                   value={reason}
                   onChange={e => setReason(e.target.value)}
@@ -172,10 +204,10 @@ export default function DisputeCenterPage() {
               </div>
               <button
                 onClick={handleSubmit}
-                disabled={submitting}
+                disabled={submitting || ordersWithoutOpenReport.length === 0}
                 className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold rounded-xl text-sm transition-colors disabled:opacity-60"
               >
-                {submitting ? 'Submitting...' : t('dispute.submit')}
+                {submitting ? 'Submitting…' : t('dispute.submit')}
               </button>
             </div>
           </div>
@@ -183,7 +215,7 @@ export default function DisputeCenterPage() {
 
         {/* Reports list */}
         {loading ? (
-          <div className="text-center py-16 text-slate-400 dark:text-slate-500 text-sm">Loading...</div>
+          <div className="text-center py-16 text-slate-400 dark:text-slate-500 text-sm">Loading…</div>
         ) : reports.length === 0 ? (
           <div className="text-center py-16">
             <ShieldCheck className="w-10 h-10 mx-auto mb-3 text-slate-300 dark:text-slate-600" />

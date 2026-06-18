@@ -32,7 +32,7 @@ router.post('/', authMiddleware, async (req: any, res: any) => {
     if (ticket.available === 0) ticket.status = 'sold';
     await ticket.save();
 
-    const purchase = await Purchase.create({
+    const purchase = new Purchase({
       buyer: req.user.id,
       ticket: ticketId,
       quantity: qty,
@@ -41,6 +41,8 @@ router.post('/', authMiddleware, async (req: any, res: any) => {
       totalPaid,
       status: 'confirmed',
     });
+    purchase.orderNumber = `ORD-${purchase._id.toString().slice(-6).toUpperCase()}`;
+    await purchase.save();
 
     res.status(201).json({ purchase });
   } catch (err: any) {

@@ -75,6 +75,21 @@ mongoose
       { $set: { permissionLevel: 3 } }
     );
 
+    // Backfill orderNumber for purchases that predate the stored field
+    const Purchase = require('./models/Purchase');
+    const unNumbered = await Purchase.find({ orderNumber: { $exists: false } }).select('_id');
+    if (unNumbered.length) {
+      await Purchase.bulkWrite(
+        unNumbered.map((p: any) => ({
+          updateOne: {
+            filter: { _id: p._id },
+            update: { $set: { orderNumber: `ORD-${p._id.toString().slice(-6).toUpperCase()}` } },
+          },
+        }))
+      );
+      console.log(`Backfilled orderNumber for ${unNumbered.length} purchase(s)`);
+    }
+
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });
