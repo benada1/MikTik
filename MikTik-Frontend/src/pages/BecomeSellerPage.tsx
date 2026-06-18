@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, type FormEvent, type ChangeEvent } from 'r
 import { useNavigate } from 'react-router-dom';
 import { Store, Clock, XCircle, Upload, User, MapPin, FileText, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const API = 'http://localhost:5000/api';
 type AppStatus = 'none' | 'pending' | 'approved' | 'rejected';
@@ -47,6 +48,7 @@ export default function BecomeSellerPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
+  const { t } = useLanguage();
 
   const [appStatus, setAppStatus] = useState<AppStatus>('none');
   const [rejectionReason, setRejectionReason] = useState('');
@@ -113,7 +115,7 @@ export default function BecomeSellerPage() {
     setError('');
 
     if (!idImage && !hasExistingIdImage) {
-      setError('Please upload your ID document image.');
+      setError(t('becomeSeller.uploadIdError'));
       return;
     }
 
@@ -137,7 +139,7 @@ export default function BecomeSellerPage() {
         body: fd,
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to submit');
+      if (!res.ok) throw new Error(data.error || t('becomeSeller.failed'));
       setAppStatus('pending');
     } catch (err: any) {
       setError(err.message);
@@ -161,9 +163,9 @@ export default function BecomeSellerPage() {
           <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Clock className="w-8 h-8 text-amber-600 dark:text-amber-400" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Application under review</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('becomeSeller.underReview')}</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Your seller application is being reviewed by our team. You'll be notified once a decision has been made.
+            {t('becomeSeller.underReviewDesc')}
           </p>
         </div>
       </div>
@@ -180,8 +182,8 @@ export default function BecomeSellerPage() {
             <Store className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Become a Seller</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Complete the form below to apply for a seller account</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('becomeSeller.title')}</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t('becomeSeller.subtitle')}</p>
           </div>
         </div>
 
@@ -190,9 +192,9 @@ export default function BecomeSellerPage() {
           <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex gap-3">
             <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-red-700 dark:text-red-400">Previous application rejected</p>
+              <p className="text-sm font-semibold text-red-700 dark:text-red-400">{t('becomeSeller.previousRejected')}</p>
               {rejectionReason && <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">{rejectionReason}</p>}
-              <p className="text-xs text-red-500 mt-1">You can update your details and resubmit below.</p>
+              <p className="text-xs text-red-500 mt-1">{t('becomeSeller.resubmitBelow')}</p>
             </div>
           </div>
         )}
@@ -200,22 +202,22 @@ export default function BecomeSellerPage() {
         <form onSubmit={handleSubmit} className="mt-8 space-y-8">
 
           {/* Personal information */}
-          <Section icon={User} title="Personal Information">
+          <Section icon={User} title={t('becomeSeller.personalInfo')}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Account email">
+              <Field label={t('becomeSeller.accountEmail')}>
                 <input type="text" value={user?.email || ''} readOnly className={INPUT_READONLY} />
               </Field>
-              <Field label="Full legal name" required>
+              <Field label={t('becomeSeller.fullLegalName')} required>
                 <input
                   type="text"
                   value={form.fullName}
                   onChange={set('fullName')}
-                  placeholder="As it appears on your ID"
+                  placeholder={t('becomeSeller.asOnId')}
                   required
                   className={INPUT}
                 />
               </Field>
-              <Field label="Phone number" required>
+              <Field label={t('becomeSeller.phoneNumber')} required>
                 <input
                   type="tel"
                   value={form.phone}
@@ -225,7 +227,7 @@ export default function BecomeSellerPage() {
                   className={INPUT}
                 />
               </Field>
-              <Field label="Date of birth" required>
+              <Field label={t('becomeSeller.dateOfBirth')} required>
                 <input
                   type="date"
                   value={form.dateOfBirth}
@@ -234,7 +236,7 @@ export default function BecomeSellerPage() {
                   className={INPUT}
                 />
               </Field>
-              <Field label="National ID / Passport number" required>
+              <Field label={t('becomeSeller.nationalId')} required>
                 <input
                   type="text"
                   value={form.idNumber}
@@ -248,18 +250,18 @@ export default function BecomeSellerPage() {
           </Section>
 
           {/* Address */}
-          <Section icon={MapPin} title="Address">
+          <Section icon={MapPin} title={t('becomeSeller.address')}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Street address">
+              <Field label={t('becomeSeller.streetAddress')}>
                 <input
                   type="text"
                   value={form.street}
                   onChange={set('street')}
-                  placeholder="123 Herzl St, Apt 4"
+                  placeholder={t('becomeSeller.streetPlaceholder')}
                   className={INPUT}
                 />
               </Field>
-              <Field label="City" required>
+              <Field label={t('becomeSeller.city')} required>
                 <input
                   type="text"
                   value={form.city}
@@ -269,34 +271,34 @@ export default function BecomeSellerPage() {
                   className={INPUT}
                 />
               </Field>
-              <Field label="Country">
+              <Field label={t('becomeSeller.country')}>
                 <select value={form.country} onChange={set('country')} className={INPUT}>
-                  <option>Israel</option>
-                  <option>United States</option>
-                  <option>United Kingdom</option>
-                  <option>Other</option>
+                  <option>{t('becomeSeller.israel')}</option>
+                  <option>{t('becomeSeller.unitedStates')}</option>
+                  <option>{t('becomeSeller.unitedKingdom')}</option>
+                  <option>{t('becomeSeller.other')}</option>
                 </select>
               </Field>
             </div>
           </Section>
 
           {/* Profile */}
-          <Section icon={FileText} title="About You">
-            <Field label="Bio">
+          <Section icon={FileText} title={t('becomeSeller.aboutYou')}>
+            <Field label={t('becomeSeller.bio')}>
               <textarea
                 value={form.bio}
                 onChange={set('bio')}
                 rows={3}
-                placeholder="Tell buyers a bit about yourself and why you're selling tickets…"
+                placeholder={t('becomeSeller.bioPlaceholder')}
                 className={`${INPUT} resize-none`}
               />
             </Field>
           </Section>
 
           {/* ID document upload */}
-          <Section icon={Upload} title="Identity Verification">
+          <Section icon={Upload} title={t('becomeSeller.identityVerification')}>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Upload a clear photo or scan of your national ID card or passport. Accepted formats: JPG, PNG, PDF (max 10 MB).
+              {t('becomeSeller.uploadIdDesc')}
             </p>
 
             <input
@@ -323,13 +325,13 @@ export default function BecomeSellerPage() {
               </div>
             ) : hasExistingIdImage ? (
               <div className="flex items-center justify-between gap-3 px-4 py-3 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl">
-                <p className="text-sm text-slate-500 dark:text-slate-400">Previously uploaded document on file</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t('becomeSeller.previousDocOnFile')}</p>
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
                   className="text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:underline"
                 >
-                  Replace
+                  {t('becomeSeller.replace')}
                 </button>
               </div>
             ) : (
@@ -339,8 +341,8 @@ export default function BecomeSellerPage() {
                 className="w-full flex flex-col items-center justify-center gap-2 px-4 py-8 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl text-slate-400 hover:border-indigo-400 hover:text-indigo-500 dark:hover:border-indigo-500 transition-colors"
               >
                 <Upload className="w-6 h-6" />
-                <span className="text-sm font-medium">Click to upload ID document</span>
-                <span className="text-xs">JPG, PNG or PDF · max 10 MB</span>
+                <span className="text-sm font-medium">{t('becomeSeller.uploadIdClick')}</span>
+                <span className="text-xs">{t('becomeSeller.uploadIdFormat')}</span>
               </button>
             )}
           </Section>
@@ -356,7 +358,7 @@ export default function BecomeSellerPage() {
             disabled={submitting}
             className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold text-sm transition-colors disabled:opacity-60"
           >
-            {submitting ? 'Submitting…' : appStatus === 'rejected' ? 'Resubmit Application' : 'Submit Application'}
+            {submitting ? t('becomeSeller.submitting') : appStatus === 'rejected' ? t('becomeSeller.resubmit') : t('becomeSeller.submitApplication')}
           </button>
         </form>
       </div>

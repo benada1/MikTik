@@ -193,19 +193,35 @@ router.post('/reset-password', async (req: any, res: any) => {
 // POST /api/auth/google
 router.post('/google', async (req: any, res: any) => {
   try {
-    const { credential } = req.body;
-    if (!credential) return res.status(400).json({ error: 'Google credential is required' });
+    const { credential, access_token } = req.body;
 
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
-    if (!payload || !payload.email) {
-      return res.status(401).json({ error: 'Invalid Google token' });
+    let email: string, name: string | undefined, googleId: string;
+
+    if (access_token) {
+      const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
+      if (!r.ok) return res.status(401).json({ error: 'Invalid Google access token' });
+      const info: any = await r.json();
+      if (!info.email) return res.status(401).json({ error: 'Could not retrieve email from Google' });
+      email = info.email;
+      name = info.name;
+      googleId = info.id;
+    } else if (credential) {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      if (!payload || !payload.email) {
+        return res.status(401).json({ error: 'Invalid Google token' });
+      }
+      email = payload.email;
+      name = payload.name;
+      googleId = payload.sub;
+    } else {
+      return res.status(400).json({ error: 'Google credential or access_token is required' });
     }
-
-    const { sub: googleId, email, name } = payload;
 
     let user = await User.findOne({ $or: [{ googleId }, { email: email.toLowerCase() }] });
     if (user) {

@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Upload, Info, CheckCircle, X, FileText, Image, Zap } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const API = 'http://localhost:5000/api';
 const CATEGORIES = ['Concert', 'Sports', 'Theater', 'Festival', 'Comedy', 'Other'];
@@ -22,6 +23,7 @@ function formatBytes(bytes: number) {
 export default function SellTicketPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     event: '', category: '', date: '', venue: '', city: '',
     section: '', row: '', qty: '1', price: '', originalPrice: '', description: '',
@@ -95,10 +97,10 @@ export default function SellTicketPage() {
         body: formData,
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to list ticket');
+      if (!res.ok) throw new Error(data.error || t('sell.failed'));
       setSubmitted(true);
     } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(err.message || t('sell.somethingWrong'));
     } finally {
       setLoading(false);
     }
@@ -111,16 +113,16 @@ export default function SellTicketPage() {
           <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-5">
             <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Listing submitted!</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('sell.successTitle')}</h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
-            Your ticket listing is live on the marketplace.
+            {t('sell.successDesc')}
           </p>
           <div className="flex flex-col gap-3">
             <button
               onClick={() => navigate('/marketplace')}
               className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold text-sm transition-colors"
             >
-              View marketplace
+              {t('sell.viewMarketplace')}
             </button>
             <button
               onClick={() => {
@@ -130,7 +132,7 @@ export default function SellTicketPage() {
               }}
               className="w-full py-3 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-colors hover:bg-slate-200 dark:hover:bg-zinc-800"
             >
-              List another ticket
+              {t('sell.listAnother')}
             </button>
           </div>
         </div>
@@ -142,17 +144,17 @@ export default function SellTicketPage() {
     <div className="bg-white dark:bg-zinc-950 min-h-screen">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Sell a ticket</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">List your ticket securely. We handle escrow and payment.</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('sell.title')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t('sell.subtitle')}</p>
         </div>
 
         {/* Escrow notice */}
         <div className="flex items-start gap-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-4 mb-8">
           <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-300 mb-1">Seller protection included</p>
+            <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-300 mb-1">{t('sell.protectionTitle')}</p>
             <p className="text-xs text-indigo-700 dark:text-indigo-400 leading-relaxed">
-              Buyers pay into escrow. Funds are released to you once they confirm receipt. Zero fraud risk.
+              {t('sell.protectionDesc')}
             </p>
           </div>
         </div>
@@ -167,33 +169,33 @@ export default function SellTicketPage() {
 
           {/* Event info */}
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-6">
-            <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-5">Event information</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-5">{t('sell.eventInfo')}</h2>
             <div className="space-y-4">
               <div>
-                <label className={labelClass}>Event name *</label>
-                <input type="text" value={form.event} onChange={set('event')} placeholder="e.g. Tel Aviv Music Festival" required className={inputClass} />
+                <label className={labelClass}>{t('sell.eventName')}</label>
+                <input type="text" value={form.event} onChange={set('event')} placeholder={t('sell.eventNamePlaceholder')} required className={inputClass} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Category *</label>
+                  <label className={labelClass}>{t('sell.category')}</label>
                   <select value={form.category} onChange={set('category')} required className={inputClass}>
-                    <option value="">Select category</option>
+                    <option value="">{t('sell.selectCategory')}</option>
                     {CATEGORIES.map(c => <option key={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className={labelClass}>Event date *</label>
+                  <label className={labelClass}>{t('sell.eventDate')}</label>
                   <input type="date" value={form.date} onChange={set('date')} required className={inputClass} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Venue *</label>
-                  <input type="text" value={form.venue} onChange={set('venue')} placeholder="Yarkon Park" required className={inputClass} />
+                  <label className={labelClass}>{t('sell.venue')}</label>
+                  <input type="text" value={form.venue} onChange={set('venue')} placeholder={t('sell.venuePlaceholder')} required className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>City *</label>
-                  <input type="text" value={form.city} onChange={set('city')} placeholder="Tel Aviv" required className={inputClass} />
+                  <label className={labelClass}>{t('sell.city')}</label>
+                  <input type="text" value={form.city} onChange={set('city')} placeholder={t('sell.cityPlaceholder')} required className={inputClass} />
                 </div>
               </div>
             </div>
@@ -201,19 +203,19 @@ export default function SellTicketPage() {
 
           {/* Ticket details */}
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-6">
-            <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-5">Ticket details</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-5">{t('sell.ticketDetails')}</h2>
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className={labelClass}>Section</label>
-                  <input type="text" value={form.section} onChange={set('section')} placeholder="GA Floor" className={inputClass} />
+                  <label className={labelClass}>{t('sell.section')}</label>
+                  <input type="text" value={form.section} onChange={set('section')} placeholder={t('sell.sectionPlaceholder')} className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Row</label>
-                  <input type="text" value={form.row} onChange={set('row')} placeholder="A" className={inputClass} />
+                  <label className={labelClass}>{t('sell.row')}</label>
+                  <input type="text" value={form.row} onChange={set('row')} placeholder={t('sell.rowPlaceholder')} className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Qty</label>
+                  <label className={labelClass}>{t('sell.qty')}</label>
                   <select value={form.qty} onChange={set('qty')} className={inputClass}>
                     {[1, 2, 3, 4, 5, 6, 7, 8].map(n => <option key={n}>{n}</option>)}
                   </select>
@@ -222,26 +224,26 @@ export default function SellTicketPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Your asking price (₪) *</label>
+                  <label className={labelClass}>{t('sell.askingPrice')}</label>
                   <input type="number" value={form.price} onChange={set('price')} placeholder="250" min="1" required className={inputClass} />
                   <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                    <Info className="w-3 h-3" /> 5% service fee deducted from each sale.
+                    <Info className="w-3 h-3" /> {t('sell.serviceFee')}
                   </p>
                 </div>
                 <div>
-                  <label className={labelClass}>Face value / original price (₪)</label>
+                  <label className={labelClass}>{t('sell.faceValue')}</label>
                   <input type="number" value={form.originalPrice} onChange={set('originalPrice')} placeholder="300" min="1" className={inputClass} />
-                  <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">Used to show discount badge.</p>
+                  <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{t('sell.discountBadge')}</p>
                 </div>
               </div>
 
               <div>
-                <label className={labelClass}>Description</label>
+                <label className={labelClass}>{t('sell.description')}</label>
                 <textarea
                   value={form.description}
                   onChange={set('description')}
                   rows={3}
-                  placeholder="Describe the seats, view, or any other details buyers should know..."
+                  placeholder={t('sell.descriptionPlaceholder')}
                   className={`${inputClass} resize-none`}
                 />
               </div>
@@ -251,8 +253,8 @@ export default function SellTicketPage() {
                 <div className="flex items-center gap-2.5">
                   <Zap className="w-4 h-4 text-amber-500" />
                   <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Instant transfer</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Tickets sent automatically on payment</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{t('sell.instantTransfer')}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{t('sell.instantTransferDesc')}</p>
                   </div>
                 </div>
                 <button
@@ -268,9 +270,9 @@ export default function SellTicketPage() {
 
           {/* File upload */}
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-6">
-            <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-1">Ticket files</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-1">{t('sell.ticketFiles')}</h2>
             <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
-              Upload your ticket files. Held securely and only released to the buyer after payment is confirmed. Max 5 files, 10 MB each.
+              {t('sell.filesDesc')}
             </p>
 
             {/* Drop zone */}
@@ -287,9 +289,9 @@ export default function SellTicketPage() {
             >
               <Upload className="w-6 h-6 text-slate-400" />
               <span className="text-sm text-slate-500 dark:text-slate-400">
-                Drop files here or <span className="text-indigo-600 dark:text-indigo-400 font-medium">click to upload</span>
+                {t('sell.dropFiles')} <span className="text-indigo-600 dark:text-indigo-400 font-medium">{t('sell.clickUpload')}</span>
               </span>
-              <span className="text-xs text-slate-400">PDF, PNG, JPG up to 10 MB · up to 5 files</span>
+              <span className="text-xs text-slate-400">{t('sell.fileTypes')}</span>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -337,7 +339,7 @@ export default function SellTicketPage() {
             disabled={loading}
             className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors text-sm"
           >
-            {loading ? 'Submitting...' : 'List ticket for sale'}
+            {loading ? t('sell.submitting') : t('sell.listForSale')}
           </button>
         </form>
       </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, TrendingUp, Eye, Trash2, CheckCircle, Clock, ShieldCheck, Ticket, ArrowRight, MapPin, Calendar } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const API = 'http://localhost:5000/api';
 
@@ -17,16 +18,17 @@ interface Listing {
   views: number;
 }
 
-const STATUS_CFG = {
-  active:  { label: 'Active',   icon: CheckCircle, classes: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' },
-  sold:    { label: 'Sold out', icon: TrendingUp,  classes: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800' },
-  pending: { label: 'Pending',  icon: Clock,       classes: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800' },
-};
-
 export default function SellerDashboardPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const { t } = useLanguage();
+
+  const STATUS_CFG = {
+    active:  { label: t('status.active'),   icon: CheckCircle, classes: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' },
+    sold:    { label: t('status.soldOut'),   icon: TrendingUp,  classes: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800' },
+    pending: { label: t('status.pending'),   icon: Clock,       classes: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800' },
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('tt_token');
@@ -55,7 +57,7 @@ export default function SellerDashboardPage() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Remove this listing?')) return;
+    if (!confirm(t('seller.deleteConfirm'))) return;
     setDeleting(id);
     const token = localStorage.getItem('tt_token');
     try {
@@ -82,24 +84,24 @@ export default function SellerDashboardPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">My Listings</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage your tickets for sale</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('seller.title')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t('seller.subtitle')}</p>
           </div>
           <Link
             to="/sell"
             className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-sm font-semibold rounded-xl transition-colors"
           >
-            <Plus className="w-4 h-4" /> New listing
+            <Plus className="w-4 h-4" /> {t('seller.newListing')}
           </Link>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Total listings', value: listings.length },
-            { label: 'Active',         value: active },
-            { label: 'Total views',    value: listings.reduce((s, l) => s + l.views, 0) },
-            { label: 'Total earned',   value: `₪${totalEarned.toLocaleString()}` },
+            { label: t('seller.totalListings'), value: listings.length },
+            { label: t('seller.active'),        value: active },
+            { label: t('seller.totalViews'),    value: listings.reduce((s, l) => s + l.views, 0) },
+            { label: t('seller.totalEarned'),   value: `₪${totalEarned.toLocaleString()}` },
           ].map(s => (
             <div key={s.label} className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-4">
               <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{s.value}</div>
@@ -112,7 +114,7 @@ export default function SellerDashboardPage() {
         <div className="flex items-center gap-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-4 mb-6">
           <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
           <p className="text-sm text-indigo-700 dark:text-indigo-300">
-            Earnings are held in escrow and released once buyers confirm receipt.
+            {t('seller.escrowNotice')}
           </p>
         </div>
 
@@ -131,13 +133,13 @@ export default function SellerDashboardPage() {
             <div className="w-16 h-16 bg-slate-100 dark:bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Ticket className="w-8 h-8 text-slate-400" />
             </div>
-            <h3 className="font-semibold text-slate-900 dark:text-white mb-1">No listings yet</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">List your first ticket and start selling.</p>
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-1">{t('seller.noListings')}</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{t('seller.noListingsSub')}</p>
             <Link
               to="/sell"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold text-sm transition-colors"
             >
-              <Plus className="w-4 h-4" /> List a ticket <ArrowRight className="w-4 h-4" />
+              <Plus className="w-4 h-4" /> {t('seller.listTicket')} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         ) : (
@@ -178,13 +180,13 @@ export default function SellerDashboardPage() {
 
                   <div className="flex items-center gap-5 mt-3 pt-3 border-t border-slate-100 dark:border-white/5 text-xs text-slate-500 dark:text-slate-400">
                     <span className="font-semibold text-slate-900 dark:text-white">₪{l.price}</span>
-                    <span>{l.available} remaining</span>
-                    <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{l.views} views</span>
+                    <span>{l.available} {t('seller.remaining')}</span>
+                    <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{l.views} {t('seller.views')}</span>
                     <Link
                       to={`/ticket/${l.id}`}
                       className="ml-auto text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors"
                     >
-                      View listing
+                      {t('seller.viewListing')}
                     </Link>
                   </div>
                 </div>

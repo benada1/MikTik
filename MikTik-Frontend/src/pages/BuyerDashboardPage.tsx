@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Ticket, ShieldCheck, CheckCircle, Clock, XCircle, Download, ArrowRight, MapPin, Calendar } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const API = 'http://localhost:5000/api';
 
@@ -37,15 +38,16 @@ const CAT_GRADIENT: Record<string, string> = {
   Comedy: 'from-yellow-900 via-amber-800 to-orange-950',
 };
 
-const STATUS_CFG = {
-  confirmed: { label: 'Confirmed', icon: CheckCircle, classes: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' },
-  pending:   { label: 'Pending',   icon: Clock,       classes: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800' },
-  cancelled: { label: 'Cancelled', icon: XCircle,     classes: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800' },
-};
-
 export default function BuyerDashboardPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
+
+  const STATUS_CFG = {
+    confirmed: { label: t('status.confirmed'), icon: CheckCircle, classes: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' },
+    pending:   { label: t('status.pending'),   icon: Clock,       classes: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800' },
+    cancelled: { label: t('status.cancelled'), icon: XCircle,     classes: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800' },
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('tt_token');
@@ -72,21 +74,21 @@ export default function BuyerDashboardPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">My Tickets</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Your purchases and order history</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('buyer.title')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t('buyer.subtitle')}</p>
           </div>
           <Link to="/marketplace" className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
-            Browse tickets <ArrowRight className="w-4 h-4" />
+            {t('buyer.browseTickets')} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Total orders', value: purchases.length },
-            { label: 'Confirmed', value: confirmed },
-            { label: 'Pending', value: pending },
-            { label: 'Total spent', value: `₪${totalSpent}` },
+            { label: t('buyer.totalOrders'), value: purchases.length },
+            { label: t('buyer.confirmed'), value: confirmed },
+            { label: t('buyer.pending'), value: pending },
+            { label: t('buyer.totalSpent'), value: `₪${totalSpent}` },
           ].map(s => (
             <div key={s.label} className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-4">
               <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{s.value}</div>
@@ -99,7 +101,7 @@ export default function BuyerDashboardPage() {
         <div className="flex items-center gap-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-4 mb-6">
           <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
           <p className="text-sm text-indigo-700 dark:text-indigo-300">
-            All payments are held in escrow and released to sellers only after you confirm receipt.
+            {t('buyer.escrowNotice')}
           </p>
         </div>
 
@@ -124,23 +126,23 @@ export default function BuyerDashboardPage() {
             <div className="w-16 h-16 bg-slate-100 dark:bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Ticket className="w-8 h-8 text-slate-400" />
             </div>
-            <h3 className="font-semibold text-slate-900 dark:text-white mb-1">No tickets yet</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Browse the marketplace and buy your first ticket.</p>
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-1">{t('buyer.noTickets')}</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{t('buyer.noTicketsSub')}</p>
             <Link
               to="/marketplace"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold text-sm transition-colors"
             >
-              Browse tickets <ArrowRight className="w-4 h-4" />
+              {t('buyer.browseTickets')} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         ) : (
           <div className="space-y-4">
             {purchases.map(order => {
-              const t = order.ticket;
-              const gradient = t ? (CAT_GRADIENT[t.category] || CAT_GRADIENT['Concert']) : CAT_GRADIENT['Concert'];
-              const eventDate = t?.date
-                ? new Date(t.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-                : t ? `${t.month} ${t.day}` : '—';
+              const tk = order.ticket;
+              const gradient = tk ? (CAT_GRADIENT[tk.category] || CAT_GRADIENT['Concert']) : CAT_GRADIENT['Concert'];
+              const eventDate = tk?.date
+                ? new Date(tk.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                : tk ? `${tk.month} ${tk.day}` : '—';
 
               return (
                 <div key={order.id} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
@@ -149,8 +151,8 @@ export default function BuyerDashboardPage() {
                     <div className={`relative w-24 sm:w-32 shrink-0 bg-linear-to-br ${gradient} flex flex-col items-center justify-center`}>
                       <div className="absolute inset-0 bg-black/30" />
                       <div className="relative text-center px-2">
-                        <div className="text-[10px] font-bold text-white/70 uppercase tracking-widest">{t?.month ?? '—'}</div>
-                        <div className="text-2xl font-black text-white leading-none">{t?.day ?? '—'}</div>
+                        <div className="text-[10px] font-bold text-white/70 uppercase tracking-widest">{tk?.month ?? '—'}</div>
+                        <div className="text-2xl font-black text-white leading-none">{tk?.day ?? '—'}</div>
                       </div>
                     </div>
 
@@ -159,12 +161,12 @@ export default function BuyerDashboardPage() {
                       <div className="flex items-start justify-between gap-2 flex-wrap mb-2">
                         <div className="min-w-0">
                           <h3 className="font-semibold text-slate-900 dark:text-white text-sm truncate">
-                            {t?.name ?? 'Ticket details unavailable'}
+                            {tk?.name ?? t('buyer.unavailable')}
                           </h3>
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-                            {t?.city && (
+                            {tk?.city && (
                               <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
-                                <MapPin className="w-3 h-3" />{t.city} · {t.venue}
+                                <MapPin className="w-3 h-3" />{tk.city} · {tk.venue}
                               </span>
                             )}
                             {eventDate && (
@@ -173,9 +175,9 @@ export default function BuyerDashboardPage() {
                               </span>
                             )}
                           </div>
-                          {(t?.section || t?.row) && (
+                          {(tk?.section || tk?.row) && (
                             <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                              {t.section}{t.row ? ` · Row ${t.row}` : ''}
+                              {tk.section}{tk.row ? ` · ${t('buyer.row')} ${tk.row}` : ''}
                             </p>
                           )}
                         </div>
@@ -197,12 +199,12 @@ export default function BuyerDashboardPage() {
                           <span>{order.quantity} ticket{order.quantity > 1 ? 's' : ''}</span>
                           <span className="font-semibold text-slate-700 dark:text-slate-300">₪{order.totalPaid}</span>
                         </div>
-                        {t && (
+                        {tk && (
                           <Link
-                            to={`/ticket/${t.id}`}
+                            to={`/ticket/${tk.id}`}
                             className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors"
                           >
-                            <Download className="w-3.5 h-3.5" /> View ticket
+                            <Download className="w-3.5 h-3.5" /> {t('buyer.viewTicket')}
                           </Link>
                         )}
                       </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ShieldCheck, Store, CheckCircle, XCircle, ChevronRight, X } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const API = 'http://localhost:5000/api';
 
@@ -34,6 +35,7 @@ export default function AdminPanelPage() {
   const [selected, setSelected] = useState<SellerApp | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => { fetchApplications(); }, []);
 
@@ -104,9 +106,9 @@ export default function AdminPanelPage() {
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-1">
             <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Admin Panel</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('admin.title')}</h1>
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Seller applications</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('admin.subtitle')}</p>
         </div>
 
         {/* Filter tabs */}
@@ -121,7 +123,7 @@ export default function AdminPanelPage() {
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
+              {t(`admin.${f}`)}
               {counts[f] > 0 && (
                 <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
                   f === 'pending' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' :
@@ -143,7 +145,7 @@ export default function AdminPanelPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-slate-400 dark:text-slate-500 text-sm">
-            No {filter === 'all' ? '' : filter} applications.
+            {t('admin.no')} {filter === 'all' ? '' : t(`admin.${filter}`)} {t('admin.noApplications')}
           </div>
         ) : (
           <div className="space-y-2">
@@ -183,7 +185,7 @@ export default function AdminPanelPage() {
             <div className="sticky top-0 z-10 bg-white dark:bg-zinc-950 border-b border-slate-100 dark:border-white/5 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <div className="flex items-center gap-2">
                 <Store className="w-4 h-4 text-indigo-500" />
-                <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Application Details</h2>
+                <h2 className="font-semibold text-slate-900 dark:text-white text-sm">{t('admin.applicationDetails')}</h2>
               </div>
               <button
                 onClick={() => setSelected(null)}
@@ -198,39 +200,39 @@ export default function AdminPanelPage() {
               {/* Status + date */}
               <div className="flex items-center justify-between">
                 <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${statusStyle(selected.status)}`}>
-                  {selected.status.charAt(0).toUpperCase() + selected.status.slice(1)}
+                  {t(`admin.${selected.status}`)}
                 </span>
                 <span className="text-xs text-slate-400 dark:text-slate-500">
-                  Submitted {new Date(selected.createdAt).toLocaleDateString()}
+                  {t('admin.submitted')} {new Date(selected.createdAt).toLocaleDateString()}
                 </span>
               </div>
 
               {/* Personal */}
               <div className="space-y-3">
-                <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Personal</p>
+                <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('admin.personal')}</p>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                   <div>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Account name</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.accountName')}</p>
                     <p className="font-medium text-slate-900 dark:text-white">{selected.user.name}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Email</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.email')}</p>
                     <p className="font-medium text-slate-900 dark:text-white break-all">{selected.user.email}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Full legal name</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.fullLegalName')}</p>
                     <p className="font-medium text-slate-900 dark:text-white">{selected.fullName || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Phone</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.phone')}</p>
                     <p className="font-medium text-slate-900 dark:text-white">{selected.phone || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">ID / Passport</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.idPassport')}</p>
                     <p className="font-medium text-slate-900 dark:text-white">{selected.idNumber || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Date of birth</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.dateOfBirth')}</p>
                     <p className="font-medium text-slate-900 dark:text-white">
                       {selected.dateOfBirth ? new Date(selected.dateOfBirth).toLocaleDateString() : '—'}
                     </p>
@@ -240,20 +242,20 @@ export default function AdminPanelPage() {
 
               {/* Address */}
               <div className="space-y-3">
-                <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Address</p>
+                <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('admin.address')}</p>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                   {selected.address?.street && (
                     <div className="col-span-2">
-                      <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Street</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.street')}</p>
                       <p className="font-medium text-slate-900 dark:text-white">{selected.address.street}</p>
                     </div>
                   )}
                   <div>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">City</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.city')}</p>
                     <p className="font-medium text-slate-900 dark:text-white">{selected.address?.city || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Country</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.country')}</p>
                     <p className="font-medium text-slate-900 dark:text-white">{selected.address?.country || '—'}</p>
                   </div>
                 </div>
@@ -262,7 +264,7 @@ export default function AdminPanelPage() {
               {/* Bio */}
               {selected.bio && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Bio</p>
+                  <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('admin.bio')}</p>
                   <p className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-zinc-900 rounded-xl px-4 py-3 leading-relaxed">
                     {selected.bio}
                   </p>
@@ -272,14 +274,14 @@ export default function AdminPanelPage() {
               {/* ID document */}
               {selected.idImageUrl && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">ID Document</p>
+                  <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('admin.idDocument')}</p>
                   <a
                     href={`http://localhost:5000${selected.idImageUrl}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
                   >
-                    View uploaded ID document →
+                    {t('admin.viewDocument')}
                   </a>
                 </div>
               )}
@@ -287,7 +289,7 @@ export default function AdminPanelPage() {
               {/* Rejection reason display */}
               {selected.status === 'rejected' && selected.rejectionReason && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-red-500 uppercase tracking-wider">Rejection Reason</p>
+                  <p className="text-xs font-semibold text-red-500 uppercase tracking-wider">{t('admin.rejectionReason')}</p>
                   <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl px-4 py-3">
                     {selected.rejectionReason}
                   </p>
@@ -300,7 +302,7 @@ export default function AdminPanelPage() {
                   <textarea
                     value={rejectReason}
                     onChange={e => setRejectReason(e.target.value)}
-                    placeholder="Rejection reason (optional, shown to user)"
+                    placeholder={t('admin.rejectReasonPlaceholder')}
                     rows={2}
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
                   />
@@ -310,14 +312,14 @@ export default function AdminPanelPage() {
                       disabled={actionLoading}
                       className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl text-sm font-semibold hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors disabled:opacity-60"
                     >
-                      <CheckCircle className="w-4 h-4" /> Approve
+                      <CheckCircle className="w-4 h-4" /> {t('admin.approve')}
                     </button>
                     <button
                       onClick={() => handleReject(selected._id)}
                       disabled={actionLoading}
                       className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl text-sm font-semibold hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-60"
                     >
-                      <XCircle className="w-4 h-4" /> Reject
+                      <XCircle className="w-4 h-4" /> {t('admin.reject')}
                     </button>
                   </div>
                 </div>

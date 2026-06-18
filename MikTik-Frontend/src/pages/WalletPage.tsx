@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowDownLeft, ArrowUpRight, ShieldCheck, Plus, Banknote, CreditCard } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const TRANSACTIONS = [
   { id: 'TXN-001', type: 'credit', label: 'Ticket Sale — Eyal Golan', amount: 406, date: 'Dec 10, 2024', status: 'completed' },
@@ -14,14 +15,15 @@ const balance = 1291;
 export default function WalletPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
+  const { t } = useLanguage();
 
   return (
     <div className="bg-white dark:bg-zinc-950 min-h-screen">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Wallet</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage your balance and transactions</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('wallet.title')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t('wallet.subtitle')}</p>
         </div>
 
         {/* Balance card */}
@@ -31,23 +33,23 @@ export default function WalletPage() {
             <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-black/10 rounded-full" />
           </div>
           <div className="relative">
-            <p className="text-indigo-200 text-xs font-semibold uppercase tracking-wider mb-2">Available balance</p>
+            <p className="text-indigo-200 text-xs font-semibold uppercase tracking-wider mb-2">{t('wallet.availableBalance')}</p>
             <p className="text-4xl font-bold text-white mb-1">₪{balance.toLocaleString()}</p>
             <p className="text-indigo-300 text-xs flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3" /> Escrow-protected funds
+              <ShieldCheck className="w-3 h-3" /> {t('wallet.escrowProtected')}
             </p>
             <div className="flex gap-3 mt-5">
               <button
                 onClick={() => { setShowAdd(true); setShowWithdraw(false); }}
                 className="flex items-center gap-1.5 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur border border-white/20 rounded-xl text-white text-sm font-semibold transition-colors"
               >
-                <Plus className="w-4 h-4" /> Add funds
+                <Plus className="w-4 h-4" /> {t('wallet.addFunds')}
               </button>
               <button
                 onClick={() => { setShowWithdraw(true); setShowAdd(false); }}
                 className="flex items-center gap-1.5 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur border border-white/20 rounded-xl text-white text-sm font-semibold transition-colors"
               >
-                <Banknote className="w-4 h-4" /> Withdraw
+                <Banknote className="w-4 h-4" /> {t('wallet.withdraw')}
               </button>
             </div>
           </div>
@@ -57,11 +59,11 @@ export default function WalletPage() {
         {(showAdd || showWithdraw) && (
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-5 mb-6">
             <h3 className="font-semibold text-slate-900 dark:text-white text-sm mb-4">
-              {showAdd ? 'Add funds' : 'Withdraw funds'}
+              {showAdd ? t('wallet.addFundsTitle') : t('wallet.withdrawTitle')}
             </h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Amount (₪)</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('wallet.amount')}</label>
                 <input
                   type="number"
                   placeholder="500"
@@ -71,9 +73,9 @@ export default function WalletPage() {
               </div>
               {showAdd && (
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Payment method</label>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('wallet.paymentMethod')}</label>
                   <div className="flex gap-2">
-                    {['Credit card', 'Bank transfer', 'PayPal'].map(m => (
+                    {[t('wallet.creditCard'), t('wallet.bankTransfer'), t('wallet.paypal')].map(m => (
                       <button key={m} className="flex-1 py-2 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                         {m}
                       </button>
@@ -83,10 +85,10 @@ export default function WalletPage() {
               )}
               <div className="flex gap-3">
                 <button className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold rounded-xl text-sm transition-colors">
-                  Confirm
+                  {t('wallet.confirm')}
                 </button>
                 <button onClick={() => { setShowAdd(false); setShowWithdraw(false); }} className="px-4 py-2.5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 font-semibold rounded-xl text-sm hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors">
-                  Cancel
+                  {t('wallet.cancel')}
                 </button>
               </div>
             </div>
@@ -96,9 +98,9 @@ export default function WalletPage() {
         {/* Quick stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
-            { icon: ArrowDownLeft, label: 'Total earned', value: `₪${(406+700+185).toLocaleString()}`, color: 'text-emerald-600 dark:text-emerald-400' },
-            { icon: ArrowUpRight, label: 'Total spent', value: `₪${(616).toLocaleString()}`, color: 'text-red-500 dark:text-red-400' },
-            { icon: CreditCard, label: 'Pending', value: '₪700', color: 'text-amber-600 dark:text-amber-400' },
+            { icon: ArrowDownLeft, label: t('wallet.totalEarned'), value: `₪${(406+700+185).toLocaleString()}`, color: 'text-emerald-600 dark:text-emerald-400' },
+            { icon: ArrowUpRight, label: t('wallet.totalSpent'), value: `₪${(616).toLocaleString()}`, color: 'text-red-500 dark:text-red-400' },
+            { icon: CreditCard, label: t('wallet.pending'), value: '₪700', color: 'text-amber-600 dark:text-amber-400' },
           ].map(s => (
             <div key={s.label} className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-4">
               <s.icon className={`w-4 h-4 mb-2 ${s.color}`} />
@@ -110,7 +112,7 @@ export default function WalletPage() {
 
         {/* Transaction history */}
         <div>
-          <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-4">Transaction history</h2>
+          <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-4">{t('wallet.transactionHistory')}</h2>
           <div className="space-y-2">
             {TRANSACTIONS.map(tx => (
               <div key={tx.id} className="flex items-center gap-4 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl px-4 py-3.5">
@@ -128,7 +130,7 @@ export default function WalletPage() {
                     {tx.type === 'credit' ? '+' : '-'}₪{tx.amount}
                   </p>
                   <p className={`text-xs ${tx.status === 'pending' ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`}>
-                    {tx.status}
+                    {tx.status === 'pending' ? t('wallet.pendingStatus') : t('wallet.completed')}
                   </p>
                 </div>
               </div>

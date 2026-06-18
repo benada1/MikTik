@@ -3,17 +3,18 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ShieldCheck, Ticket, Sun, Moon, AlertCircle, CheckCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
-function getPasswordStrength(pw: string): { label: string; color: string; width: string } | null {
+function getPasswordStrengthKey(pw: string): { key: string; color: string; width: string } | null {
   if (!pw) return null;
-  if (pw.length < 8) return { label: 'Too short', color: 'bg-red-500', width: 'w-1/4' };
+  if (pw.length < 8) return { key: 'password.tooShort', color: 'bg-red-500', width: 'w-1/4' };
   const hasUpper = /[A-Z]/.test(pw);
   const hasNum = /[0-9]/.test(pw);
   const hasSymbol = /[^A-Za-z0-9]/.test(pw);
   const score = [hasUpper, hasNum, hasSymbol].filter(Boolean).length;
-  if (score === 0) return { label: 'Weak', color: 'bg-orange-500', width: 'w-2/4' };
-  if (score === 1) return { label: 'Fair', color: 'bg-yellow-500', width: 'w-3/4' };
-  return { label: 'Strong', color: 'bg-green-500', width: 'w-full' };
+  if (score === 0) return { key: 'password.weak', color: 'bg-orange-500', width: 'w-2/4' };
+  if (score === 1) return { key: 'password.fair', color: 'bg-yellow-500', width: 'w-3/4' };
+  return { key: 'password.strong', color: 'bg-green-500', width: 'w-full' };
 }
 
 export default function RegisterPage() {
@@ -25,6 +26,7 @@ export default function RegisterPage() {
   const { theme, toggle } = useTheme();
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(f => ({ ...f, [k]: e.target.value }));
@@ -34,13 +36,13 @@ export default function RegisterPage() {
 
   const validate = () => {
     const errs: Partial<typeof form> = {};
-    if (!form.name.trim()) errs.name = 'Name is required';
-    if (!form.email.trim()) errs.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Enter a valid email address';
-    if (!form.password) errs.password = 'Password is required';
-    else if (form.password.length < 8) errs.password = 'Password must be at least 8 characters';
-    if (!form.confirm) errs.confirm = 'Please confirm your password';
-    else if (form.password !== form.confirm) errs.confirm = 'Passwords do not match';
+    if (!form.name.trim()) errs.name = t('register.nameRequired');
+    if (!form.email.trim()) errs.email = t('register.emailRequired');
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = t('register.emailInvalid');
+    if (!form.password) errs.password = t('register.passwordRequired');
+    else if (form.password.length < 8) errs.password = t('register.passwordMinError');
+    if (!form.confirm) errs.confirm = t('register.confirmRequired');
+    else if (form.password !== form.confirm) errs.confirm = t('register.passwordMismatch');
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -65,7 +67,7 @@ export default function RegisterPage() {
     }
   };
 
-  const strength = getPasswordStrength(form.password);
+  const strengthData = getPasswordStrengthKey(form.password);
 
   return (
     <div className="min-h-screen flex bg-white dark:bg-zinc-950">
@@ -82,14 +84,14 @@ export default function RegisterPage() {
           <span className="text-white font-bold text-[17px]">MikTik</span>
         </Link>
         <div className="relative z-10">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Join Israel's<br />safest ticket market
+          <h2 className="text-3xl font-bold text-white mb-4 whitespace-pre-line">
+            {t('register.joinSafest')}
           </h2>
           <p className="text-indigo-200 mb-8 leading-relaxed">
-            Create a free account and start buying or selling tickets with full escrow protection in minutes.
+            {t('register.joinDesc')}
           </p>
           <div className="space-y-3">
-            {['Free to join, no subscription', 'Instant ID verification', 'Sell in under 5 minutes'].map(f => (
+            {[t('register.freeJoin'), t('register.instantId'), t('register.sellFast')].map(f => (
               <div key={f} className="flex items-center gap-2.5 text-white/90 text-sm">
                 <ShieldCheck className="w-4 h-4 text-indigo-200" />
                 {f}
@@ -97,7 +99,7 @@ export default function RegisterPage() {
             ))}
           </div>
         </div>
-        <p className="text-indigo-300 text-xs relative z-10">© 2025 MikTik. All rights reserved.</p>
+        <p className="text-indigo-300 text-xs relative z-10">{t('register.copyright')}</p>
       </div>
 
       {/* Right panel */}
@@ -113,17 +115,17 @@ export default function RegisterPage() {
             <button onClick={toggle} className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
               {theme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
             </button>
-            <span className="text-sm text-slate-500 dark:text-slate-400">Have an account?</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400">{t('register.haveAccount')}</span>
             <Link to="/login" className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors">
-              Sign in →
+              {t('login.signIn')} →
             </Link>
           </div>
         </div>
 
         <div className="flex-1 flex items-center justify-center px-6 sm:px-10 py-8">
           <div className="w-full max-w-sm">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Create account</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">Free forever. No credit card required.</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{t('register.createAccount')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">{t('register.freeForever')}</p>
 
             {error && (
               <div className="flex items-start gap-2.5 mb-5 px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/50 rounded-xl text-sm text-red-700 dark:text-red-400">
@@ -135,7 +137,7 @@ export default function RegisterPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Name */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Full name</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('register.fullName')}</label>
                 <input
                   type="text"
                   value={form.name}
@@ -152,7 +154,7 @@ export default function RegisterPage() {
 
               {/* Email */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Email address</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('register.emailLabel')}</label>
                 <input
                   type="email"
                   value={form.email}
@@ -167,7 +169,7 @@ export default function RegisterPage() {
                       {fieldErrors.email.includes('sign in') ? (
                         <>
                           {fieldErrors.email.split('sign in')[0]}
-                          <Link to="/login" className="font-semibold underline">sign in</Link>
+                          <Link to="/login" className="font-semibold underline">{t('register.signIn')}</Link>
                           {fieldErrors.email.split('sign in')[1]}
                         </>
                       ) : fieldErrors.email}
@@ -178,13 +180,13 @@ export default function RegisterPage() {
 
               {/* Password */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Password</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('register.passwordLabel')}</label>
                 <div className="relative">
                   <input
                     type={showPass ? 'text' : 'password'}
                     value={form.password}
                     onChange={set('password')}
-                    placeholder="Min 8 characters"
+                    placeholder={t('register.passwordMin')}
                     className={`w-full px-4 pr-10 py-3 bg-slate-50 dark:bg-zinc-900 border rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${fieldErrors.password ? 'border-red-400 dark:border-red-600' : 'border-slate-200 dark:border-white/10'}`}
                   />
                   <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
@@ -193,14 +195,14 @@ export default function RegisterPage() {
                 </div>
                 {fieldErrors.password ? (
                   <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{fieldErrors.password}</p>
-                ) : strength && (
+                ) : strengthData && (
                   <div className="mt-2 space-y-1">
                     <div className="h-1 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full transition-all ${strength.color} ${strength.width}`} />
+                      <div className={`h-full rounded-full transition-all ${strengthData.color} ${strengthData.width}`} />
                     </div>
                     <div className="flex items-center gap-1">
-                      {strength.label === 'Strong' && <CheckCircle className="w-3 h-3 text-green-500" />}
-                      <span className="text-xs text-slate-400">{strength.label}</span>
+                      {strengthData.key === 'password.strong' && <CheckCircle className="w-3 h-3 text-green-500" />}
+                      <span className="text-xs text-slate-400">{t(strengthData.key)}</span>
                     </div>
                   </div>
                 )}
@@ -208,7 +210,7 @@ export default function RegisterPage() {
 
               {/* Confirm password */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Confirm password</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('register.confirmPassword')}</label>
                 <input
                   type="password"
                   value={form.confirm}
@@ -222,10 +224,10 @@ export default function RegisterPage() {
               </div>
 
               <p className="text-xs text-slate-400 dark:text-slate-500">
-                By creating an account you agree to our{' '}
-                <a href="#" className="text-indigo-600 dark:text-indigo-400 hover:underline">Terms of Service</a>
-                {' '}and{' '}
-                <a href="#" className="text-indigo-600 dark:text-indigo-400 hover:underline">Privacy Policy</a>.
+                {t('register.termsPrefix')}{' '}
+                <a href="#" className="text-indigo-600 dark:text-indigo-400 hover:underline">{t('register.termsOfService')}</a>
+                {' '}{t('register.and')}{' '}
+                <a href="#" className="text-indigo-600 dark:text-indigo-400 hover:underline">{t('register.privacyPolicy')}</a>.
               </p>
 
               <button
@@ -233,7 +235,7 @@ export default function RegisterPage() {
                 disabled={loading}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
               >
-                {loading ? 'Creating account...' : 'Create free account'}
+                {loading ? t('register.creating') : t('register.createFree')}
               </button>
             </form>
           </div>

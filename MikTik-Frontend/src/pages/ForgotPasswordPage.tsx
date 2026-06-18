@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Mail, CheckCircle, Ticket } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +21,7 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Something went wrong');
+      if (!res.ok) throw new Error(data.error || t('forgotPassword.somethingWrong'));
       setSent(true);
     } catch (err: any) {
       setError(err.message);
@@ -44,12 +46,12 @@ export default function ForgotPasswordPage() {
             <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-5">
               <CheckCircle className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Check your email</h1>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('forgotPassword.checkEmail')}</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">
-              We sent a reset link to <span className="font-medium text-slate-700 dark:text-slate-300">{email}</span>. Check your inbox.
+              {t('forgotPassword.sentTo')} <span className="font-medium text-slate-700 dark:text-slate-300">{email}</span>. {t('forgotPassword.checkInbox')}
             </p>
             <Link to="/login" className="inline-flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
-              <ArrowLeft className="w-4 h-4" /> Back to sign in
+              <ArrowLeft className="w-4 h-4" /> {t('forgotPassword.backToSignIn')}
             </Link>
           </div>
         ) : (
@@ -57,14 +59,14 @@ export default function ForgotPasswordPage() {
             <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mb-6">
               <Mail className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Reset password</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{t('forgotPassword.title')}</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">
-              Enter your email and we'll send you a reset link.
+              {t('forgotPassword.subtitle')}
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Email address</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('forgotPassword.emailLabel')}</label>
                 <input
                   type="email"
                   value={email}
@@ -82,13 +84,13 @@ export default function ForgotPasswordPage() {
                 disabled={loading}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
               >
-                {loading ? 'Sending...' : 'Send reset link'}
+                {loading ? t('forgotPassword.sending') : t('forgotPassword.sendLink')}
               </button>
             </form>
 
             <div className="mt-6 text-center">
               <Link to="/login" className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
-                <ArrowLeft className="w-3.5 h-3.5" /> Back to sign in
+                <ArrowLeft className="w-3.5 h-3.5" /> {t('forgotPassword.backToSignIn')}
               </Link>
             </div>
           </>
