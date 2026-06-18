@@ -1,6 +1,7 @@
 const express = require('express');
 const Purchase = require('../models/Purchase');
 const Ticket = require('../models/Ticket');
+const Notification = require('../models/Notification');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
@@ -43,6 +44,28 @@ router.post('/', authMiddleware, async (req: any, res: any) => {
     });
     purchase.orderNumber = `ORD-${purchase._id.toString().slice(-6).toUpperCase()}`;
     await purchase.save();
+
+    // Notify buyer: purchase confirmed
+    await Notification.create({
+      user: req.user.id,
+      type: 'ticket_purchased',
+      title: 'Purchase confirmed',
+      message: `You bought ${qty}x "${ticket.name}" at ${ticket.venue} for ₪${totalPaid.toLocaleString()}.`,
+      link: '/buyer-dashboard',
+      relatedId: purchase._id,
+    });
+
+    // Notify seller: their ticket was sold
+    if (ticket.seller) {
+      await Notification.create({
+        user: ticket.seller,
+        type: 'ticket_sold',
+        title: 'Ticket sold!',
+        message: `${qty}x "${ticket.name}" was just purchased. You'll receive ₪${(ticket.price * qty * 0.95).toLocaleString()} after the buyer confirms receipt.`,
+        link: '/seller-dashboard',
+        relatedId: purchase._id,
+      });
+    }
 
     res.status(201).json({ purchase });
   } catch (err: any) {

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, TrendingUp, Eye, Trash2, CheckCircle, Clock, ShieldCheck, Ticket, ArrowRight, MapPin, Calendar } from 'lucide-react';
+import { Plus, TrendingUp, Eye, Trash2, CheckCircle, Clock, ShieldCheck, Ticket, ArrowRight, MapPin, Calendar, Tag } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const API = 'http://localhost:5000/api';
+
+type StatusFilter = 'all' | 'sold' | 'pending';
 
 interface Listing {
   id: string;
@@ -22,6 +24,7 @@ export default function SellerDashboardPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<StatusFilter>('all');
   const { t } = useLanguage();
 
   const STATUS_CFG = {
@@ -76,6 +79,18 @@ export default function SellerDashboardPage() {
     .reduce((s, l) => s + l.price, 0);
 
   const active = listings.filter(l => l.status === 'active').length;
+  const sold = listings.filter(l => l.status === 'sold').length;
+  const pending = listings.filter(l => l.status === 'pending').length;
+
+  const TABS: { key: StatusFilter; label: string; count: number }[] = [
+    { key: 'all',     label: 'All',     count: listings.length },
+    { key: 'sold',    label: 'Sold',    count: sold },
+    { key: 'pending', label: 'Pending', count: pending },
+  ];
+
+  const filteredListings = activeTab === 'all'
+    ? listings
+    : listings.filter(l => l.status === activeTab);
 
   return (
     <div className="bg-white dark:bg-zinc-950 min-h-screen">
@@ -118,6 +133,32 @@ export default function SellerDashboardPage() {
           </p>
         </div>
 
+        {/* Status tabs */}
+        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-zinc-900 rounded-xl mb-6 w-fit">
+          {TABS.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === tab.key
+                  ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
+            >
+              {tab.label}
+              {tab.count > 0 && (
+                <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+                  activeTab === tab.key
+                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400'
+                    : 'bg-slate-200 dark:bg-zinc-700 text-slate-500 dark:text-slate-400'
+                }`}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
         {/* Content */}
         {loading ? (
           <div className="space-y-3">
@@ -128,23 +169,27 @@ export default function SellerDashboardPage() {
               </div>
             ))}
           </div>
-        ) : listings.length === 0 ? (
+        ) : filteredListings.length === 0 ? (
           <div className="text-center py-24">
             <div className="w-16 h-16 bg-slate-100 dark:bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Ticket className="w-8 h-8 text-slate-400" />
             </div>
-            <h3 className="font-semibold text-slate-900 dark:text-white mb-1">{t('seller.noListings')}</h3>
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-1">
+              {activeTab === 'all' ? t('seller.noListings') : `No ${TABS.find(tab => tab.key === activeTab)?.label.toLowerCase()} listings`}
+            </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{t('seller.noListingsSub')}</p>
-            <Link
-              to="/sell"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold text-sm transition-colors"
-            >
-              <Plus className="w-4 h-4" /> {t('seller.listTicket')} <ArrowRight className="w-4 h-4" />
-            </Link>
+            {activeTab === 'all' && (
+              <Link
+                to="/sell"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold text-sm transition-colors"
+              >
+                <Plus className="w-4 h-4" /> {t('seller.listTicket')} <ArrowRight className="w-4 h-4" />
+              </Link>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
-            {listings.map(l => {
+            {filteredListings.map(l => {
               const cfg = STATUS_CFG[l.status] ?? STATUS_CFG.active;
               const StatusIcon = cfg.icon;
               const eventDate = l.date
@@ -158,6 +203,9 @@ export default function SellerDashboardPage() {
                         <h3 className="font-semibold text-slate-900 dark:text-white text-sm">{l.name}</h3>
                         <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full ${cfg.classes}`}>
                           <StatusIcon className="w-3 h-3" />{cfg.label}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-slate-400">
+                          <Tag className="w-3 h-3" />{l.category}
                         </span>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

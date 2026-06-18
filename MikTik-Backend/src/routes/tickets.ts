@@ -37,7 +37,7 @@ router.get('/', async (req: any, res: any) => {
   try {
     const { category, city, maxPrice, verified, instant, sort, search, limit } = req.query;
 
-    const query: any = { status: 'active' };
+    const query: any = { status: 'active', date: { $gte: new Date() } };
 
     if (category && category !== 'All') query.category = category;
     if (city && city !== 'All Cities') query.city = city;
@@ -67,7 +67,7 @@ router.get('/', async (req: any, res: any) => {
   }
 });
 
-// GET /api/tickets/my — authenticated seller's own listings
+// GET /api/tickets/my — authenticated seller's own listings (all statuses, all dates)
 router.get('/my', authMiddleware, async (req: any, res: any) => {
   try {
     const tickets = await Ticket.find({ seller: req.user.id }).sort({ createdAt: -1 });
@@ -124,6 +124,13 @@ router.post('/', authMiddleware, upload.array('files', 5), async (req: any, res:
         (req.files as any[]).forEach((f: any) => fs.unlinkSync(f.path));
       }
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    if (new Date(date) < new Date()) {
+      if (req.files) {
+        (req.files as any[]).forEach((f: any) => fs.unlinkSync(f.path));
+      }
+      return res.status(400).json({ error: 'Event date cannot be in the past' });
     }
 
     const user = await User.findById(req.user.id).select('name');

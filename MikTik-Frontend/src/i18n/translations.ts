@@ -7,6 +7,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'nav.sell': 'Sell Tickets',
     'nav.becomeSeller': 'Become a Seller',
     'nav.myTickets': 'My Tickets',
+    'nav.myListings': 'My Listings',
     'nav.signIn': 'Sign in',
     'nav.getStarted': 'Get started',
 
@@ -246,6 +247,9 @@ const translations: Record<Lang, Record<string, string>> = {
     'buyer.viewTicket': 'View ticket',
     'buyer.row': 'Row',
     'buyer.unavailable': 'Ticket details unavailable',
+    'buyer.filter.all': 'All',
+    'buyer.filter.expired': 'Expired',
+    'buyer.filter.upcoming': 'Waiting for Event',
     'status.confirmed': 'Confirmed',
     'status.pending': 'Pending',
     'status.cancelled': 'Cancelled',
@@ -311,6 +315,11 @@ const translations: Record<Lang, Record<string, string>> = {
     'sell.listAnother': 'List another ticket',
     'sell.failed': 'Failed to list ticket',
     'sell.somethingWrong': 'Something went wrong. Please try again.',
+    'sell.invalidCity': 'Please select a valid Israeli city from the list.',
+    'sell.invalidVenue': 'Please select a valid Israeli venue from the list.',
+    'sell.pastDate': 'Event date cannot be in the past.',
+    'sell.venueHint': 'Type to search and select a venue.',
+    'sell.cityHint': 'Type to search and select a city.',
 
     // Wallet page
     'wallet.title': 'Wallet',
@@ -432,6 +441,11 @@ const translations: Record<Lang, Record<string, string>> = {
     'status.resolved': 'Resolved',
     'status.closed': 'Closed',
 
+    // Notifications
+    'notif.title': 'Notifications',
+    'notif.markAllRead': 'Mark all read',
+    'notif.empty': 'No notifications yet',
+
     // Admin panel page
     'admin.title': 'Admin Panel',
     'admin.subtitle': 'Seller applications',
@@ -469,6 +483,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'nav.sell': 'מכור כרטיסים',
     'nav.becomeSeller': 'הפוך למוכר',
     'nav.myTickets': 'הכרטיסים שלי',
+    'nav.myListings': 'המודעות שלי',
     'nav.signIn': 'כניסה',
     'nav.getStarted': 'התחל',
 
@@ -708,6 +723,9 @@ const translations: Record<Lang, Record<string, string>> = {
     'buyer.viewTicket': 'צפה בכרטיס',
     'buyer.row': 'שורה',
     'buyer.unavailable': 'פרטי הכרטיס אינם זמינים',
+    'buyer.filter.all': 'הכל',
+    'buyer.filter.expired': 'פג תוקף',
+    'buyer.filter.upcoming': 'ממתין לאירוע',
     'status.confirmed': 'מאושר',
     'status.pending': 'בהמתנה',
     'status.cancelled': 'בוטל',
@@ -773,6 +791,11 @@ const translations: Record<Lang, Record<string, string>> = {
     'sell.listAnother': 'פרסם כרטיס נוסף',
     'sell.failed': 'לא הצלחנו לפרסם את הכרטיס',
     'sell.somethingWrong': 'משהו השתבש. אנא נסה שוב.',
+    'sell.invalidCity': 'אנא בחר עיר ישראלית תקפה מהרשימה.',
+    'sell.invalidVenue': 'אנא בחר מקום אירוע ישראלי תקף מהרשימה.',
+    'sell.pastDate': 'תאריך האירוע לא יכול להיות בעבר.',
+    'sell.venueHint': 'הקלד לחיפוש ובחר מקום.',
+    'sell.cityHint': 'הקלד לחיפוש ובחר עיר.',
 
     // Wallet page
     'wallet.title': 'ארנק',
@@ -893,6 +916,11 @@ const translations: Record<Lang, Record<string, string>> = {
     'status.open': 'פתוח',
     'status.resolved': 'נפתר',
     'status.closed': 'סגור',
+
+    // Notifications
+    'notif.title': 'התראות',
+    'notif.markAllRead': 'סמן הכל כנקרא',
+    'notif.empty': 'אין התראות עדיין',
 
     // Admin panel page
     'admin.title': 'לוח ניהול',

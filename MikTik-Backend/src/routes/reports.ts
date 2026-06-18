@@ -1,6 +1,7 @@
 const express = require('express');
 const Report = require('../models/Report');
 const Purchase = require('../models/Purchase');
+const Notification = require('../models/Notification');
 const authMiddleware = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/auth');
 
@@ -76,6 +77,18 @@ router.patch('/:id/status', authMiddleware, requireAdmin, async (req: any, res: 
     if (adminNote !== undefined) update.adminNote = adminNote;
     const report = await Report.findByIdAndUpdate(req.params.id, update, { new: true }).populate('user', 'name email');
     if (!report) return res.status(404).json({ error: 'Report not found' });
+
+    const statusLabels: Record<string, string> = { open: 'Open', pending: 'Under review', closed: 'Closed' };
+    const noteText = adminNote ? ` Admin note: ${adminNote}` : '';
+    await Notification.create({
+      user: report.user._id,
+      type: 'report_updated',
+      title: 'Dispute status updated',
+      message: `Your dispute for order ${report.orderId} is now "${statusLabels[status] || status}".${noteText}`,
+      link: '/dispute-center',
+      relatedId: report._id,
+    });
+
     res.json({ report });
   } catch {
     res.status(500).json({ error: 'Server error' });

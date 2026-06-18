@@ -5,6 +5,7 @@ const multer = require('multer');
 const SellerApplication = require('../models/SellerApplication');
 const Seller = require('../models/Seller');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
@@ -165,6 +166,15 @@ router.patch('/:id/approve', authMiddleware, authMiddleware.requireAdmin, async 
 
     await User.findByIdAndUpdate(application.user._id, { permissionLevel: 2 });
 
+    await Notification.create({
+      user: application.user._id,
+      type: 'seller_approved',
+      title: 'Seller application approved!',
+      message: "Congratulations! You're now a verified seller on MikTik. You can start listing tickets right away.",
+      link: '/sell',
+      relatedId: application._id,
+    });
+
     res.json({ application });
   } catch (err: any) {
     console.error('Approve error:', err);
@@ -182,6 +192,18 @@ router.patch('/:id/reject', authMiddleware, authMiddleware.requireAdmin, async (
     application.reviewedAt = new Date();
     application.rejectionReason = req.body.reason?.trim() || '';
     await application.save();
+
+    const reason = application.rejectionReason
+      ? ` Reason: ${application.rejectionReason}`
+      : ' You may resubmit with updated information.';
+    await Notification.create({
+      user: application.user,
+      type: 'seller_rejected',
+      title: 'Seller application rejected',
+      message: `Your seller application was not approved.${reason}`,
+      link: '/become-seller',
+      relatedId: application._id,
+    });
 
     res.json({ application });
   } catch {

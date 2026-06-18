@@ -38,9 +38,12 @@ const CAT_GRADIENT: Record<string, string> = {
   Comedy: 'from-yellow-900 via-amber-800 to-orange-950',
 };
 
+type FilterMode = 'all' | 'expired' | 'upcoming';
+
 export default function BuyerDashboardPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<FilterMode>('all');
   const { t } = useLanguage();
 
   const STATUS_CFG = {
@@ -59,6 +62,19 @@ export default function BuyerDashboardPage() {
       .catch(() => setPurchases([]))
       .finally(() => setLoading(false));
   }, []);
+
+  const now = new Date();
+
+  const isExpired = (p: Purchase) => {
+    if (!p.ticket?.date) return false;
+    return new Date(p.ticket.date) < now;
+  };
+
+  const filteredPurchases = purchases.filter(p => {
+    if (filter === 'expired') return isExpired(p);
+    if (filter === 'upcoming') return !isExpired(p);
+    return true;
+  });
 
   const totalSpent = purchases
     .filter(p => p.status !== 'cancelled')
@@ -105,6 +121,23 @@ export default function BuyerDashboardPage() {
           </p>
         </div>
 
+        {/* Filter tabs */}
+        <div className="flex gap-2 mb-6">
+          {(['all', 'upcoming', 'expired'] as FilterMode[]).map(mode => (
+            <button
+              key={mode}
+              onClick={() => setFilter(mode)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                filter === mode
+                  ? 'bg-indigo-600 dark:bg-indigo-500 text-white border-indigo-600 dark:border-indigo-500'
+                  : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-indigo-400 dark:hover:border-indigo-500'
+              }`}
+            >
+              {t(`buyer.filter.${mode}` as any)}
+            </button>
+          ))}
+        </div>
+
         {/* Content */}
         {loading ? (
           <div className="space-y-3">
@@ -121,7 +154,7 @@ export default function BuyerDashboardPage() {
               </div>
             ))}
           </div>
-        ) : purchases.length === 0 ? (
+        ) : filteredPurchases.length === 0 ? (
           <div className="text-center py-24">
             <div className="w-16 h-16 bg-slate-100 dark:bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Ticket className="w-8 h-8 text-slate-400" />
@@ -137,7 +170,7 @@ export default function BuyerDashboardPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {purchases.map(order => {
+            {filteredPurchases.map(order => {
               const tk = order.ticket;
               const gradient = tk ? (CAT_GRADIENT[tk.category] || CAT_GRADIENT['Concert']) : CAT_GRADIENT['Concert'];
               const eventDate = tk?.date

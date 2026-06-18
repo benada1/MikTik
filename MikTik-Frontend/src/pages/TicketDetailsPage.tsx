@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ShieldCheck, Star, MapPin, Calendar, Ticket, ArrowLeft, CheckCircle, Lock, Users, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useNotifications } from '../context/NotificationContext';
 
 const API = 'http://localhost:5000/api';
 
@@ -43,6 +44,7 @@ export default function TicketDetailsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { fetchNotifications } = useNotifications();
 
   const [ticket, setTicket] = useState<TicketDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -90,6 +92,7 @@ export default function TicketDetailsPage() {
       if (!res.ok) throw new Error(data.error || t('ticketDetails.purchaseFailed'));
       setBought(true);
       setTicket(prev => prev ? { ...prev, available: prev.available - qty } : prev);
+      fetchNotifications();
     } catch (err: any) {
       setBuyError(err.message || t('ticketDetails.somethingWrong'));
     } finally {

@@ -47,7 +47,7 @@ export default function Footer() {
                 <Ticket className="w-4 h-4 text-white" />
               </div>
               <span className="text-[17px] font-bold text-slate-900 dark:text-white">
-                Ticket<span className="text-indigo-600 dark:text-indigo-400">Trust</span>
+                Mik<span className="text-indigo-600 dark:text-indigo-400">Tik</span>
               </span>
             </Link>
             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-4">

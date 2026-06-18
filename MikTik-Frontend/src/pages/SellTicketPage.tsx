@@ -1,10 +1,34 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Upload, Info, CheckCircle, X, FileText, Image, Zap } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const API = 'http://localhost:5000/api';
 const CATEGORIES = ['Concert', 'Sports', 'Theater', 'Festival', 'Comedy', 'Other'];
+
+const ISRAELI_CITIES = [
+  'Acre', 'Afula', 'Arad', 'Ariel', 'Ashdod', 'Ashkelon', 'Bat Yam', 'Beersheba',
+  'Beit Shemesh', 'Bnei Brak', 'Dimona', 'Eilat', 'Givatayim', 'Hadera', 'Haifa',
+  'Harish', 'Herzliya', 'Hod HaSharon', 'Holon', 'Jerusalem', 'Kfar Saba', 'Kiryat Ata',
+  'Kiryat Gat', 'Kiryat Motzkin', 'Lod', "Modi'in", 'Nahariya', 'Nazareth', 'Netanya',
+  'Ness Ziona', 'Or Yehuda', 'Petah Tikva', "Ra'anana", 'Ramat Gan', 'Ramat HaSharon',
+  'Ramla', 'Rehovot', 'Rishon LeZion', 'Rosh HaAyin', 'Shoham', 'Tel Aviv-Yafo',
+  'Tiberias', 'Yavne',
+];
+
+const ISRAELI_VENUES = [
+  'Barby Club', 'Beit Lessin Theater', 'Beersheba Theater', 'Bloomfield Stadium',
+  'Caesarea Amphitheatre', 'Cameri Theater', 'Charles Bronfman Auditorium',
+  'Ein Gev Amphitheatre', 'Expo Tel Aviv', 'Habima Theater', 'Haifa Auditorium',
+  'Haifa Theater', 'HaMoshava Amphitheatre', 'Jerusalem Arena',
+  'Jerusalem International Convention Centre', 'Jerusalem Theater',
+  'Kiryat Eliezer Stadium', 'Live Park Rishon LeZion', 'Mann Auditorium',
+  'Menora Mivtachim Arena', 'Netanya Stadium', 'Nokia Arena',
+  'Ramat Gan Stadium', 'Sammy Ofer Stadium', 'Sultan\'s Pool',
+  'Suzanne Dellal Centre', 'Teddy Stadium', 'Tel Aviv Convention Center',
+  'Turner Stadium', 'Yarkon Park', 'Zappa Herzliya', 'Zappa Jerusalem',
+  'Zappa Tel Aviv',
+];
 
 const inputClass = "w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors";
 const labelClass = "block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2";
@@ -18,6 +42,67 @@ function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function Combobox({ value, onChange, options, placeholder }: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  placeholder: string;
+}) {
+  const [inputVal, setInputVal] = useState(value);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => { setInputVal(value); }, [value]);
+
+  const filtered = options
+    .filter(o => !inputVal || o.toLowerCase().includes(inputVal.toLowerCase()))
+    .slice(0, 15);
+
+  const select = (opt: string) => {
+    setInputVal(opt);
+    onChange(opt);
+    setOpen(false);
+  };
+
+  const handleBlur = () => {
+    if (options.includes(inputVal)) {
+      onChange(inputVal);
+    } else {
+      setInputVal('');
+      onChange('');
+    }
+    setOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        value={inputVal}
+        onChange={e => { setInputVal(e.target.value); onChange(''); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onBlur={handleBlur}
+        placeholder={placeholder}
+        autoComplete="off"
+        className={inputClass}
+      />
+      {open && filtered.length > 0 && (
+        <ul className="absolute z-50 mt-1 w-full max-h-48 overflow-auto bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-lg text-sm">
+          {filtered.map(opt => (
+            <li
+              key={opt}
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => select(opt)}
+              className="px-4 py-2 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-slate-900 dark:text-slate-100"
+            >
+              {opt}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 export default function SellTicketPage() {
@@ -34,6 +119,8 @@ export default function SellTicketPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const today = new Date().toISOString().split('T')[0];
 
   const set = (k: keyof typeof form) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -71,8 +158,22 @@ export default function SellTicketPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+
+    if (!form.city || !ISRAELI_CITIES.includes(form.city)) {
+      setError(t('sell.invalidCity'));
+      return;
+    }
+    if (!form.venue || !ISRAELI_VENUES.includes(form.venue)) {
+      setError(t('sell.invalidVenue'));
+      return;
+    }
+    if (form.date < today) {
+      setError(t('sell.pastDate'));
+      return;
+    }
+
+    setLoading(true);
     try {
       const token = localStorage.getItem('tt_token');
 
@@ -185,17 +286,36 @@ export default function SellTicketPage() {
                 </div>
                 <div>
                   <label className={labelClass}>{t('sell.eventDate')}</label>
-                  <input type="date" value={form.date} onChange={set('date')} required className={inputClass} />
+                  <input
+                    type="date"
+                    value={form.date}
+                    onChange={set('date')}
+                    min={today}
+                    required
+                    className={inputClass}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelClass}>{t('sell.venue')}</label>
-                  <input type="text" value={form.venue} onChange={set('venue')} placeholder={t('sell.venuePlaceholder')} required className={inputClass} />
+                  <Combobox
+                    value={form.venue}
+                    onChange={v => setForm(f => ({ ...f, venue: v }))}
+                    options={ISRAELI_VENUES}
+                    placeholder={t('sell.venuePlaceholder')}
+                  />
+                  <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{t('sell.venueHint')}</p>
                 </div>
                 <div>
                   <label className={labelClass}>{t('sell.city')}</label>
-                  <input type="text" value={form.city} onChange={set('city')} placeholder={t('sell.cityPlaceholder')} required className={inputClass} />
+                  <Combobox
+                    value={form.city}
+                    onChange={v => setForm(f => ({ ...f, city: v }))}
+                    options={ISRAELI_CITIES}
+                    placeholder={t('sell.cityPlaceholder')}
+                  />
+                  <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{t('sell.cityHint')}</p>
                 </div>
               </div>
             </div>

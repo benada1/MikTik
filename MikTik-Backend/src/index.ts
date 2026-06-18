@@ -36,8 +36,13 @@ app.use('/api/seller-applications', sellerApplicationRoutes);
 const reportRoutes = require('./routes/reports');
 app.use('/api/reports', reportRoutes);
 
+// Notification routes
+const notificationRoutes = require('./routes/notifications');
+app.use('/api/notifications', notificationRoutes);
+
 // Ensure Seller collection is created on startup
 require('./models/Seller');
+require('./models/Notification');
 
 app.get('/api/health', (req: any, res: any) => {
   res.json({ status: 'Backend is running!' });
@@ -89,6 +94,9 @@ mongoose
       );
       console.log(`Backfilled orderNumber for ${unNumbered.length} purchase(s)`);
     }
+
+    const { scheduleNotifications } = require('./jobs/notificationScheduler');
+    scheduleNotifications();
 
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);

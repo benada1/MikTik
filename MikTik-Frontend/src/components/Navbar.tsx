@@ -1,18 +1,34 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Sun, Moon, Bell, LogOut, User, ShieldCheck } from "lucide-react";
 import logo from "../assets/miktik.jpg";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
+import { useNotifications } from "../context/NotificationContext";
+import NotificationPanel from "./NotificationPanel";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
   const { theme, toggle } = useTheme();
   const { lang, toggleLang, t } = useLanguage();
   const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications();
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!notifOpen) return;
+    function handleOutsideClick(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [notifOpen]);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -24,6 +40,9 @@ export default function Navbar() {
     { to: "/marketplace", label: t("nav.marketplace") },
     sellLink,
     { to: "/buyer-dashboard", label: t("nav.myTickets") },
+    ...(user && user.permissionLevel >= 2
+      ? [{ to: "/seller-dashboard", label: t("nav.myListings") }]
+      : []),
   ];
 
   const handleLogout = () => {
@@ -69,15 +88,21 @@ export default function Navbar() {
           {/* Right side */}
           <div className="flex items-center gap-2">
             {/* Notifications */}
-            <button
-              className="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors"
-              aria-label="Notifications"
-            >
-              <Bell className="w-4.5 h-4.5" />
-              <span className="absolute top-1 right-1 w-4 h-4 bg-indigo-600 dark:bg-indigo-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center leading-none">
-                3
-              </span>
-            </button>
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => setNotifOpen(o => !o)}
+                className="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors"
+                aria-label="Notifications"
+              >
+                <Bell className="w-4.5 h-4.5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 min-w-4 h-4 bg-indigo-600 dark:bg-indigo-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center leading-none px-0.5">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+              {notifOpen && <NotificationPanel onClose={() => setNotifOpen(false)} />}
+            </div>
 
             {/* Language toggle */}
             <button
