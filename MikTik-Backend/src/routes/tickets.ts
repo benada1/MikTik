@@ -67,6 +67,38 @@ router.get('/', async (req: any, res: any) => {
   }
 });
 
+// GET /api/tickets/my — authenticated seller's own listings
+router.get('/my', authMiddleware, async (req: any, res: any) => {
+  try {
+    const tickets = await Ticket.find({ seller: req.user.id }).sort({ createdAt: -1 });
+    res.json({ tickets });
+  } catch (err: any) {
+    console.error('Get my tickets error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// DELETE /api/tickets/:id — only the seller can delete their own listing
+router.delete('/:id', authMiddleware, async (req: any, res: any) => {
+  try {
+    const ticket = await Ticket.findById(req.params.id);
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    if (ticket.seller?.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    await ticket.deleteOne();
+    if (ticket.files?.length) {
+      ticket.files.forEach((f: string) => {
+        const fullPath = path.join(process.cwd(), f);
+        if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+      });
+    }
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // GET /api/tickets/:id
 router.get('/:id', async (req: any, res: any) => {
   try {

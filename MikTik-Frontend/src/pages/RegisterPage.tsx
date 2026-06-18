@@ -79,7 +79,7 @@ export default function RegisterPage() {
           <div className="w-8 h-8 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
             <Ticket className="w-4 h-4 text-white" />
           </div>
-          <span className="text-white font-bold text-[17px]">TicketTrust</span>
+          <span className="text-white font-bold text-[17px]">MikTik</span>
         </Link>
         <div className="relative z-10">
           <h2 className="text-3xl font-bold text-white mb-4">
@@ -97,7 +97,7 @@ export default function RegisterPage() {
             ))}
           </div>
         </div>
-        <p className="text-indigo-300 text-xs relative z-10">© 2025 TicketTrust. All rights reserved.</p>
+        <p className="text-indigo-300 text-xs relative z-10">© 2025 MikTik. All rights reserved.</p>
       </div>
 
       {/* Right panel */}
@@ -107,7 +107,7 @@ export default function RegisterPage() {
             <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
               <Ticket className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-slate-900 dark:text-white text-[17px]">TicketTrust</span>
+            <span className="font-bold text-slate-900 dark:text-white text-[17px]">MikTik</span>
           </Link>
           <div className="lg:ml-auto flex items-center gap-3">
             <button onClick={toggle} className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">

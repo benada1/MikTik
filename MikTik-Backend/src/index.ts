@@ -28,6 +28,13 @@ app.use('/api/tickets', ticketRoutes);
 const purchaseRoutes = require('./routes/purchases');
 app.use('/api/purchases', purchaseRoutes);
 
+// Seller application routes
+const sellerApplicationRoutes = require('./routes/sellerApplications');
+app.use('/api/seller-applications', sellerApplicationRoutes);
+
+// Ensure Seller collection is created on startup
+require('./models/Seller');
+
 app.get('/api/health', (req: any, res: any) => {
   res.json({ status: 'Backend is running!' });
 });
@@ -43,8 +50,27 @@ app.post('/api/test', (req: any, res: any) => {
 
 mongoose
   .connect(process.env.MONGODB_URI as string, { serverSelectionTimeoutMS: 5000 })
-  .then(() => {
+  .then(async () => {
     console.log('Connected to MongoDB');
+
+    const User = require('./models/User');
+
+    // Remove legacy string role field from all users and ensure permissionLevel exists
+    await User.updateMany(
+      { role: { $exists: true } },
+      { $unset: { role: '' } }
+    );
+    await User.updateMany(
+      { permissionLevel: { $exists: false } },
+      { $set: { permissionLevel: 1 } }
+    );
+
+    // Ensure the designated admin is always level 3
+    await User.updateOne(
+      { email: 'benadziashvili@gmail.com' },
+      { $set: { permissionLevel: 3 } }
+    );
+
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });

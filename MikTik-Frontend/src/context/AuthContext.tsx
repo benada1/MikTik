@@ -6,12 +6,14 @@ interface User {
   id: string;
   name: string;
   email: string;
+  permissionLevel: 1 | 2 | 3;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (credential: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -28,7 +30,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => setUser(data.user))
+      .then(data => {
+        if (data.token) localStorage.setItem('tt_token', data.token);
+        setUser(data.user);
+      })
       .catch(() => localStorage.removeItem('tt_token'))
       .finally(() => setLoading(false));
   }, []);
@@ -41,6 +46,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Login failed');
+    localStorage.setItem('tt_token', data.token);
+    setUser(data.user);
+  };
+
+  const loginWithGoogle = async (credential: string) => {
+    const res = await fetch(`${API}/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Google login failed');
     localStorage.setItem('tt_token', data.token);
     setUser(data.user);
   };
@@ -63,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

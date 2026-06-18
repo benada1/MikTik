@@ -2,7 +2,12 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import type { ReactNode } from 'react';
 
-export default function PrivateRoute({ children }: { children: ReactNode }) {
+interface Props {
+  children: ReactNode;
+  minLevel?: 1 | 2 | 3;
+}
+
+export default function PrivateRoute({ children, minLevel = 1 }: Props) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -16,6 +21,10 @@ export default function PrivateRoute({ children }: { children: ReactNode }) {
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (user.permissionLevel < minLevel) {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

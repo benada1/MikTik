@@ -1,16 +1,31 @@
 import { Link } from 'react-router-dom';
 import { Ticket, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function Footer() {
   const { t } = useLanguage();
+  const { user } = useAuth();
+
+  const accountLinks = [
+    ...(!user ? [
+      { label: t('footer.signIn'), to: '/login' },
+      { label: t('footer.register'), to: '/register' },
+    ] : []),
+    { label: t('footer.privacy'), to: '/' },
+    { label: t('footer.terms'), to: '/' },
+  ];
+
+  const isSeller = user && user.permissionLevel >= 2;
 
   const LINKS = {
     [t('footer.section.marketplace')]: [
       { label: t('footer.browseTickets'), to: '/marketplace' },
-      { label: t('footer.sellTickets'), to: '/sell' },
+      isSeller
+        ? { label: t('footer.sellTickets'), to: '/sell' }
+        : { label: t('footer.becomeSeller'), to: '/become-seller' },
       { label: t('footer.myPurchases'), to: '/buyer-dashboard' },
-      { label: t('footer.myListings'), to: '/seller-dashboard' },
+      ...(isSeller ? [{ label: t('footer.myListings'), to: '/seller-dashboard' }] : []),
     ],
     [t('footer.section.support')]: [
       { label: t('footer.disputeCenter'), to: '/dispute-center' },
@@ -18,12 +33,7 @@ export default function Footer() {
       { label: t('footer.howItWorks'), to: '/' },
       { label: t('footer.safetyGuide'), to: '/' },
     ],
-    [t('footer.section.account')]: [
-      { label: t('footer.signIn'), to: '/login' },
-      { label: t('footer.register'), to: '/register' },
-      { label: t('footer.privacy'), to: '/' },
-      { label: t('footer.terms'), to: '/' },
-    ],
+    [t('footer.section.account')]: accountLinks,
   };
 
   return (

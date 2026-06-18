@@ -4,6 +4,7 @@ import { Eye, EyeOff, ShieldCheck, Ticket, AlertCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -12,7 +13,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { theme, toggle } = useTheme();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -44,7 +45,7 @@ export default function LoginPage() {
           <div className="w-8 h-8 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
             <Ticket className="w-4 h-4 text-white" />
           </div>
-          <span className="text-white font-bold text-[17px]">TicketTrust</span>
+          <span className="text-white font-bold text-[17px]">MikTik</span>
         </Link>
         <div className="relative z-10">
           <h2 className="text-3xl font-bold text-white mb-4">
@@ -62,7 +63,7 @@ export default function LoginPage() {
             ))}
           </div>
         </div>
-        <p className="text-indigo-300 text-xs relative z-10">© 2025 TicketTrust. All rights reserved.</p>
+        <p className="text-indigo-300 text-xs relative z-10">© 2025 MikTik. All rights reserved.</p>
       </div>
 
       {/* Right panel */}
@@ -73,7 +74,7 @@ export default function LoginPage() {
             <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
               <Ticket className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-slate-900 dark:text-white text-[17px]">TicketTrust</span>
+            <span className="font-bold text-slate-900 dark:text-white text-[17px]">MikTik</span>
           </Link>
           <div className="lg:ml-auto flex items-center gap-3">
             <button onClick={toggle} className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
@@ -90,7 +91,7 @@ export default function LoginPage() {
         <div className="flex-1 flex items-center justify-center px-6 sm:px-10 py-8">
           <div className="w-full max-w-sm">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Welcome back</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">Sign in to your TicketTrust account</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">Sign in to your MikTik account</p>
 
             {error && (
               <div className="flex items-start gap-2.5 mb-5 px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/50 rounded-xl text-sm text-red-700 dark:text-red-400">
@@ -146,6 +147,35 @@ export default function LoginPage() {
                 {loading ? 'Signing in...' : 'Sign in'}
               </button>
             </form>
+
+            <div className="flex items-center gap-3 my-5">
+              <div className="flex-1 h-px bg-slate-200 dark:bg-white/10" />
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">or</span>
+              <div className="flex-1 h-px bg-slate-200 dark:bg-white/10" />
+            </div>
+
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={async (response) => {
+                  if (!response.credential) return;
+                  setError('');
+                  setLoading(true);
+                  try {
+                    await loginWithGoogle(response.credential);
+                    navigate(from, { replace: true });
+                  } catch (err: any) {
+                    setError(err.message || 'Google sign-in failed. Please try again.');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                onError={() => setError('Google sign-in failed. Please try again.')}
+                theme="outline"
+                size="large"
+                width="368"
+                text="signin_with"
+              />
+            </div>
           </div>
         </div>
       </div>

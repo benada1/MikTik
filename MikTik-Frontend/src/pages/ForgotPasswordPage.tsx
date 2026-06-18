@@ -6,11 +6,26 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
-    setTimeout(() => { setLoading(false); setSent(true); }, 1500);
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong');
+      setSent(true);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -21,7 +36,7 @@ export default function ForgotPasswordPage() {
           <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
             <Ticket className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-slate-900 dark:text-white text-[17px]">TicketTrust</span>
+          <span className="font-bold text-slate-900 dark:text-white text-[17px]">MikTik</span>
         </Link>
 
         {sent ? (
@@ -59,6 +74,9 @@ export default function ForgotPasswordPage() {
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                 />
               </div>
+              {error && (
+                <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+              )}
               <button
                 type="submit"
                 disabled={loading}

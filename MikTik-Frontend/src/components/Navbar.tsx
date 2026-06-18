@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Sun, Moon, Bell, LogOut, User } from "lucide-react";
+import { Menu, X, Sun, Moon, Bell, LogOut, User, ShieldCheck } from "lucide-react";
 import logo from "../assets/miktik.jpg";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -16,9 +16,13 @@ export default function Navbar() {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const sellLink = user && user.permissionLevel < 2
+    ? { to: "/become-seller", label: t("nav.becomeSeller") }
+    : { to: "/sell", label: t("nav.sell") };
+
   const NAV_LINKS = [
     { to: "/marketplace", label: t("nav.marketplace") },
-    { to: "/sell", label: t("nav.sell") },
+    sellLink,
     { to: "/buyer-dashboard", label: t("nav.myTickets") },
   ];
 
@@ -100,6 +104,19 @@ export default function Navbar() {
             {/* Auth: logged in vs logged out */}
             {user ? (
               <div className="hidden md:flex items-center gap-2">
+                {user.permissionLevel === 3 && (
+                  <Link
+                    to="/admin"
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive('/admin')
+                        ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400'
+                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    Admin
+                  </Link>
+                )}
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-white/5">
                   <div className="w-6 h-6 rounded-full bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center">
                     <User className="w-3.5 h-3.5 text-white" />
@@ -173,6 +190,16 @@ export default function Navbar() {
                     {user.name}
                   </span>
                 </div>
+                {user.permissionLevel === 3 && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    Admin Panel
+                  </Link>
+                )}
                 <button
                   onClick={handleLogout}
                   className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-slate-200 dark:border-white/10 text-red-600 dark:text-red-400"

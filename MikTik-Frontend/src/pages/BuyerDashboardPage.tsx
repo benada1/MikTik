@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Ticket, ShieldCheck, CheckCircle, Download, ArrowRight, MapPin, Calendar } from 'lucide-react';
+import { Ticket, ShieldCheck, CheckCircle, Clock, XCircle, Download, ArrowRight, MapPin, Calendar } from 'lucide-react';
 
 const API = 'http://localhost:5000/api';
 
@@ -35,6 +35,12 @@ const CAT_GRADIENT: Record<string, string> = {
   Theater: 'from-rose-950 via-red-900 to-pink-950',
   Festival: 'from-orange-950 via-amber-900 to-yellow-950',
   Comedy: 'from-yellow-900 via-amber-800 to-orange-950',
+};
+
+const STATUS_CFG = {
+  confirmed: { label: 'Confirmed', icon: CheckCircle, classes: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' },
+  pending:   { label: 'Pending',   icon: Clock,       classes: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800' },
+  cancelled: { label: 'Cancelled', icon: XCircle,     classes: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800' },
 };
 
 export default function BuyerDashboardPage() {
@@ -174,9 +180,15 @@ export default function BuyerDashboardPage() {
                           )}
                         </div>
 
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shrink-0">
-                          <CheckCircle className="w-3 h-3" /> Confirmed
-                        </span>
+                        {(() => {
+                          const cfg = STATUS_CFG[order.status] ?? STATUS_CFG.confirmed;
+                          const Icon = cfg.icon;
+                          return (
+                            <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${cfg.classes}`}>
+                              <Icon className="w-3 h-3" /> {cfg.label}
+                            </span>
+                          );
+                        })()}
                       </div>
 
                       <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/5">

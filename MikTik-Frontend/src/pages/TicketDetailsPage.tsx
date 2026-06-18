@@ -223,7 +223,7 @@ export default function TicketDetailsPage() {
             <div className="bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-3">
                 <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                <h3 className="font-semibold text-indigo-900 dark:text-indigo-300 text-sm">TicketTrust Buyer Guarantee</h3>
+                <h3 className="font-semibold text-indigo-900 dark:text-indigo-300 text-sm">MikTik Buyer Guarantee</h3>
               </div>
               <ul className="space-y-2">
                 {[
