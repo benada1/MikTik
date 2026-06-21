@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, ShieldCheck, Eye, Zap, X, MapPin } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Search, ShieldCheck, Eye, X, MapPin } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const API = 'http://localhost:5000/api';
@@ -19,9 +19,10 @@ interface Ticket {
   views: number;
   available: number;
   verified: boolean;
-  instant: boolean;
   section: string;
   row: string;
+  instant: boolean;
+  bundleOnly: boolean;
 }
 
 const CITIES = ['All Cities', 'Tel Aviv', 'Jerusalem', 'Haifa', 'Beer Sheva', 'Herzliya'];
@@ -43,25 +44,38 @@ const CAT_EMOJI: Record<string, string> = {
 
 export default function MarketplacePage() {
   const { t } = useLanguage();
+  const [searchParams] = useSearchParams();
 
   const CATEGORIES = [t('marketplace.catAll'), 'Concert', 'Sports', 'Theater', 'Festival', 'Comedy'];
+
+  const urlCategory = searchParams.get('category');
+  const initialCategory = urlCategory
+    ? (CATEGORIES.find(c => c.toLowerCase() === urlCategory.toLowerCase()) ?? t('marketplace.catAll'))
+    : t('marketplace.catAll');
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState(t('marketplace.catAll'));
+  const [category, setCategory] = useState(initialCategory);
   const [city, setCity] = useState('All Cities');
   const [sort, setSort] = useState('newest');
   const [maxPrice, setMaxPrice] = useState(5000);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [instantOnly, setInstantOnly] = useState(false);
 
   const catAll = t('marketplace.catAll');
-  const hasFilters = category !== catAll || city !== 'All Cities' || maxPrice < 5000 || verifiedOnly || instantOnly || search;
+  const hasFilters = category !== catAll || city !== 'All Cities' || maxPrice < 5000 || verifiedOnly || search;
+
+  useEffect(() => {
+    const param = searchParams.get('category');
+    if (param) {
+      const matched = CATEGORIES.find(c => c.toLowerCase() === param.toLowerCase());
+      if (matched) setCategory(matched);
+    }
+  }, [searchParams]);
 
   const clearFilters = () => {
     setCategory(catAll); setCity('All Cities'); setMaxPrice(5000);
-    setVerifiedOnly(false); setInstantOnly(false); setSearch('');
+    setVerifiedOnly(false); setSearch('');
   };
 
   useEffect(() => {
@@ -72,7 +86,6 @@ export default function MarketplacePage() {
     if (city !== 'All Cities') params.set('city', city);
     if (maxPrice < 5000) params.set('maxPrice', String(maxPrice));
     if (verifiedOnly) params.set('verified', 'true');
-    if (instantOnly) params.set('instant', 'true');
     if (search) params.set('search', search);
     if (sort !== 'newest') params.set('sort', sort);
 
@@ -84,7 +97,7 @@ export default function MarketplacePage() {
       .then(data => setTickets(data.tickets || []))
       .catch(() => setTickets([]))
       .finally(() => setLoading(false));
-  }, [category, city, maxPrice, verifiedOnly, instantOnly, search, sort]);
+  }, [category, city, maxPrice, verifiedOnly, search, sort]);
 
   return (
     <div className="bg-white dark:bg-zinc-950 min-h-screen">
@@ -200,9 +213,9 @@ export default function MarketplacePage() {
                         <span className={`flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md text-white ${CAT_TAG[tk.category] || ''}`}>
                           {CAT_EMOJI[tk.category]} {tk.category}
                         </span>
-                        {tk.instant && (
-                          <span className="flex items-center gap-1 bg-amber-500/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
-                            <Zap className="w-2.5 h-2.5 fill-white" /> {t('marketplace.instant')}
+                        {tk.bundleOnly && tk.available > 1 && (
+                          <span className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md text-white bg-indigo-500/80">
+                            🎟️ {t('marketplace.bundle')} ×{tk.available}
                           </span>
                         )}
                       </div>
@@ -307,16 +320,6 @@ export default function MarketplacePage() {
                     </button>
                   </label>
 
-                  {/* Instant toggle */}
-                  <label className="flex items-center justify-between cursor-pointer">
-                    <span className="text-sm text-slate-700 dark:text-slate-300">{t('marketplace.instantOnly')}</span>
-                    <button
-                      onClick={() => setInstantOnly(v => !v)}
-                      className={`relative w-9 h-5 rounded-full transition-colors ${instantOnly ? 'bg-indigo-600 dark:bg-indigo-500' : 'bg-slate-200 dark:bg-zinc-700'}`}
-                    >
-                      <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${instantOnly ? 'left-4' : 'left-0.5'}`} />
-                    </button>
-                  </label>
                 </div>
 
                 {hasFilters && (

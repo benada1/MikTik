@@ -35,7 +35,7 @@ const upload = multer({
 // GET /api/tickets
 router.get('/', async (req: any, res: any) => {
   try {
-    const { category, city, maxPrice, verified, instant, sort, search, limit } = req.query;
+    const { category, city, maxPrice, verified, sort, search, limit } = req.query;
 
     const query: any = { status: 'active', date: { $gte: new Date() } };
 
@@ -43,7 +43,6 @@ router.get('/', async (req: any, res: any) => {
     if (city && city !== 'All Cities') query.city = city;
     if (maxPrice) query.price = { $lte: Number(maxPrice) };
     if (verified === 'true') query.verified = true;
-    if (instant === 'true') query.instant = true;
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -117,13 +116,41 @@ router.get('/:id', async (req: any, res: any) => {
 // POST /api/tickets (authenticated, multipart/form-data)
 router.post('/', authMiddleware, upload.array('files', 5), async (req: any, res: any) => {
   try {
-    const { name, category, date, venue, city, section, row, qty, price, originalPrice, description, instant } = req.body;
+    const { name, category, date, venue, city, qty, price, originalPrice, description, instant, bundleOnly, seatDetails: seatDetailsRaw } = req.body;
 
     if (!name || !category || !date || !venue || !city || !price) {
       if (req.files) {
         (req.files as any[]).forEach((f: any) => fs.unlinkSync(f.path));
       }
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    let seatDetails: { section: string; row: string; seat: string }[] = [];
+    try {
+      seatDetails = JSON.parse(seatDetailsRaw || '[]');
+    } catch {
+      if (req.files) (req.files as any[]).forEach((f: any) => fs.unlinkSync(f.path));
+      return res.status(400).json({ error: 'Invalid seat details' });
+    }
+
+    const ticketCount = qty ? Number(qty) : 1;
+    if (seatDetails.length !== ticketCount) {
+      if (req.files) (req.files as any[]).forEach((f: any) => fs.unlinkSync(f.path));
+      return res.status(400).json({ error: 'Seat details count must match quantity' });
+    }
+
+    const seatKeys = new Set<string>();
+    for (const sd of seatDetails) {
+      if (!sd.section?.trim() || !sd.row?.trim() || !sd.seat?.trim()) {
+        if (req.files) (req.files as any[]).forEach((f: any) => fs.unlinkSync(f.path));
+        return res.status(400).json({ error: 'Section, row, and seat are required for each ticket' });
+      }
+      const key = `${sd.section.trim()}|${sd.row.trim()}|${sd.seat.trim()}`;
+      if (seatKeys.has(key)) {
+        if (req.files) (req.files as any[]).forEach((f: any) => fs.unlinkSync(f.path));
+        return res.status(400).json({ error: 'Each ticket must have a unique section, row, and seat combination' });
+      }
+      seatKeys.add(key);
     }
 
     if (new Date(date) < new Date()) {
@@ -145,8 +172,10 @@ router.post('/', authMiddleware, upload.array('files', 5), async (req: any, res:
       date: new Date(date),
       venue: venue.trim(),
       city: city.trim(),
-      section: section?.trim() || '',
-      row: row?.trim() || '',
+      section: seatDetails[0]?.section?.trim() || '',
+      row: seatDetails[0]?.row?.trim() || '',
+      seat: seatDetails[0]?.seat?.trim() || '',
+      seatDetails,
       price: Number(price),
       originalPrice: originalPrice ? Number(originalPrice) : Number(price),
       available: qty ? Number(qty) : 1,
@@ -158,6 +187,7 @@ router.post('/', authMiddleware, upload.array('files', 5), async (req: any, res:
       sellerSince: new Date().getFullYear().toString(),
       verified: false,
       instant: instant === 'true',
+      bundleOnly: bundleOnly === 'true',
       files: filePaths,
     });
 

@@ -17,7 +17,7 @@ const SEED_TICKETS = [
     views: 312,
     available: 15,
     verified: true,
-    instant: true,
+
     section: 'East Stand',
     row: '3',
     sellerName: 'Yossi M.',
@@ -37,7 +37,7 @@ const SEED_TICKETS = [
     views: 134,
     available: 2,
     verified: true,
-    instant: false,
+
     section: 'Floor',
     row: '2',
     sellerName: 'Dana K.',
@@ -57,7 +57,7 @@ const SEED_TICKETS = [
     views: 89,
     available: 22,
     verified: true,
-    instant: true,
+
     section: 'Stalls',
     row: 'C',
     sellerName: 'Avi S.',
@@ -77,7 +77,7 @@ const SEED_TICKETS = [
     views: 541,
     available: 6,
     verified: true,
-    instant: false,
+
     section: 'General',
     row: '',
     sellerName: 'Michal L.',
@@ -97,7 +97,7 @@ const SEED_TICKETS = [
     views: 820,
     available: 4,
     verified: true,
-    instant: true,
+
     section: 'VIP A',
     row: '3',
     sellerName: 'Roni B.',
@@ -117,7 +117,7 @@ const SEED_TICKETS = [
     views: 673,
     available: 9,
     verified: true,
-    instant: true,
+
     section: 'Premium',
     row: '5',
     sellerName: 'Shira T.',
@@ -137,7 +137,7 @@ const SEED_TICKETS = [
     views: 445,
     available: 18,
     verified: true,
-    instant: false,
+
     section: 'Lawn',
     row: '',
     sellerName: 'Noa H.',
@@ -157,7 +157,7 @@ const SEED_TICKETS = [
     views: 1200,
     available: 30,
     verified: true,
-    instant: true,
+
     section: 'North Stand',
     row: '22',
     sellerName: 'Tal R.',
@@ -177,7 +177,7 @@ const SEED_TICKETS = [
     views: 67,
     available: 3,
     verified: false,
-    instant: false,
+
     section: 'Balcony',
     row: '1',
     sellerName: 'Gal M.',

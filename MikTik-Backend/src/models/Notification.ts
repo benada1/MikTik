@@ -13,6 +13,7 @@ const notificationSchema = new mongoose.Schema(
         'ticket_expired',
         'seller_approved',
         'seller_rejected',
+        'report_opened',
         'report_updated',
       ],
       required: true,

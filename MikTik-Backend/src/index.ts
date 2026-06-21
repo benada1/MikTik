@@ -40,6 +40,10 @@ app.use('/api/reports', reportRoutes);
 const notificationRoutes = require('./routes/notifications');
 app.use('/api/notifications', notificationRoutes);
 
+// Static page routes (privacy policy, terms of service)
+const staticPageRoutes = require('./routes/staticPages');
+app.use('/api/static-pages', staticPageRoutes);
+
 // Ensure Seller collection is created on startup
 require('./models/Seller');
 require('./models/Notification');

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import ScrollToTop from './components/ScrollToTop';
 import Layout from './components/Layout';
 import PrivateRoute from './components/PrivateRoute';
 import HomePage from './pages/HomePage';
@@ -15,10 +16,12 @@ import WalletPage from './pages/WalletPage';
 import DisputeCenterPage from './pages/DisputeCenterPage';
 import AdminPanelPage from './pages/AdminPanelPage';
 import BecomeSellerPage from './pages/BecomeSellerPage';
+import StaticPageView from './pages/StaticPageView';
 
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         {/* Auth pages — no layout chrome */}
         <Route path="/login" element={<LoginPage />} />
@@ -42,6 +45,8 @@ function App() {
                 <Route path="/wallet" element={<PrivateRoute><WalletPage /></PrivateRoute>} />
                 <Route path="/dispute-center" element={<PrivateRoute><DisputeCenterPage /></PrivateRoute>} />
                 <Route path="/admin" element={<PrivateRoute minLevel={3}><AdminPanelPage /></PrivateRoute>} />
+                <Route path="/privacy-policy" element={<StaticPageView />} />
+                <Route path="/terms-of-service" element={<StaticPageView />} />
               </Routes>
             </Layout>
           }

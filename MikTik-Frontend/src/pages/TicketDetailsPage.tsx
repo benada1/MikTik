@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ShieldCheck, Star, MapPin, Calendar, Ticket, ArrowLeft, CheckCircle, Lock, Users, Zap } from 'lucide-react';
+import { ShieldCheck, Star, MapPin, Calendar, Ticket, ArrowLeft, CheckCircle, Lock, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -28,7 +28,7 @@ interface TicketDetail {
   section: string;
   row: string;
   description: string;
-  instant: boolean;
+  bundleOnly: boolean;
 }
 
 const CAT_GRADIENT: Record<string, string> = {
@@ -68,7 +68,10 @@ export default function TicketDetailsPage() {
         return r.json();
       })
       .then(data => {
-        if (data?.ticket) setTicket(data.ticket);
+        if (data?.ticket) {
+          setTicket(data.ticket);
+          if (data.ticket.bundleOnly) setQty(data.ticket.available);
+        }
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
@@ -161,11 +164,6 @@ export default function TicketDetailsPage() {
                   <span className="flex items-center gap-1 text-xs text-emerald-400 font-semibold">
                     <ShieldCheck className="w-3 h-3" /> {t('ticketDetails.verifiedListing')}
                   </span>
-                  {ticket.instant && (
-                    <span className="flex items-center gap-1 text-xs text-yellow-300 font-semibold">
-                      <Zap className="w-3 h-3" /> {t('ticketDetails.instantTransfer')}
-                    </span>
-                  )}
                 </div>
                 <h1 className="text-2xl font-bold text-white">{ticket.name}</h1>
               </div>
@@ -277,18 +275,28 @@ export default function TicketDetailsPage() {
                   </div>
                   <p className="text-xs text-slate-400 dark:text-slate-500 mb-5">{t('ticketDetails.perTicket')}</p>
 
-                  <div className="mb-4">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('ticketDetails.quantity')}</label>
-                    <select
-                      value={qty}
-                      onChange={e => setQty(Number(e.target.value))}
-                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      {Array.from({ length: Math.min(ticket.available, 8) }, (_, i) => i + 1).map(n => (
-                        <option key={n} value={n}>{n} {n > 1 ? t('ticketDetails.tickets') : t('ticketDetails.ticket')}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {ticket.bundleOnly && ticket.available > 1 ? (
+                    <div className="mb-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/40 px-4 py-3 flex items-start gap-2">
+                      <Users className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-300">{t('ticketDetails.bundleBadge')}</p>
+                        <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5">{t('ticketDetails.bundleNotice')}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mb-4">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('ticketDetails.quantity')}</label>
+                      <select
+                        value={qty}
+                        onChange={e => setQty(Number(e.target.value))}
+                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        {Array.from({ length: Math.min(ticket.available, 8) }, (_, i) => i + 1).map(n => (
+                          <option key={n} value={n}>{n} {n > 1 ? t('ticketDetails.tickets') : t('ticketDetails.ticket')}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   {/* Price breakdown */}
                   <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-xl p-3.5 mb-4 space-y-2">

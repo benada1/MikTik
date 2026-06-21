@@ -15,6 +15,14 @@ const ticketSchema = new mongoose.Schema(
     city: { type: String, required: true, trim: true },
     section: { type: String, default: '', trim: true },
     row: { type: String, default: '', trim: true },
+    seat: { type: String, default: '', trim: true },
+    seatDetails: [
+      {
+        section: { type: String, trim: true },
+        row: { type: String, trim: true },
+        seat: { type: String, trim: true },
+      },
+    ],
     price: { type: Number, required: true },
     originalPrice: { type: Number, required: true },
     available: { type: Number, required: true, default: 1 },
@@ -26,6 +34,7 @@ const ticketSchema = new mongoose.Schema(
     sellerSince: { type: String },
     verified: { type: Boolean, default: false },
     instant: { type: Boolean, default: false },
+    bundleOnly: { type: Boolean, default: false },
     views: { type: Number, default: 0 },
     status: { type: String, enum: ['active', 'sold', 'pending'], default: 'active' },
     files: [{ type: String }],

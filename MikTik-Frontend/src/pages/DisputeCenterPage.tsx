@@ -34,6 +34,7 @@ export default function DisputeCenterPage() {
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  const [showThankYou, setShowThankYou] = useState(false);
   const { t } = useLanguage();
   const { user } = useAuth();
 
@@ -89,6 +90,7 @@ export default function DisputeCenterPage() {
       if (!res.ok) throw new Error(data.error || 'Failed to submit');
       setReports(prev => [data.report, ...prev]);
       setShowNew(false);
+      setShowThankYou(true);
     } catch (e: any) {
       setFormError(e.message);
     } finally {
@@ -113,9 +115,18 @@ export default function DisputeCenterPage() {
     }
   };
 
+  const isWithinReportingWindow = (p: Purchase) => {
+    if (!p.ticket?.date) return true;
+    const deadline = new Date(new Date(p.ticket.date).getTime() + 30 * 60 * 1000);
+    return new Date() <= deadline;
+  };
+
   const ordersWithoutOpenReport = purchases.filter(p => {
     const orderNum = p.orderNumber || p.orderId;
-    return !reports.some(r => r.orderId === orderNum && r.status !== 'closed');
+    return (
+      isWithinReportingWindow(p) &&
+      !reports.some(r => r.orderId === orderNum && r.status !== 'closed')
+    );
   });
 
   return (
@@ -167,7 +178,7 @@ export default function DisputeCenterPage() {
                 </label>
                 {ordersWithoutOpenReport.length === 0 ? (
                   <p className="text-sm text-slate-400 dark:text-slate-500 py-2">
-                    No eligible orders found. You can only dispute confirmed purchases.
+                    No eligible orders found. Reports must be submitted within 30 minutes of the event start time.
                   </p>
                 ) : (
                   <select
@@ -291,6 +302,29 @@ export default function DisputeCenterPage() {
           </div>
         )}
       </div>
+
+      {/* Thank-you modal */}
+      {showThankYou && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <div className="flex items-center justify-center w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-full mx-auto mb-4">
+              <CheckCircle className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2" dir="rtl">
+              תודה על פנייתך
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" dir="rtl">
+              נציג ייצור איתך קשר בנוגע לפנייתך ב24 השעות הקרובות
+            </p>
+            <button
+              onClick={() => setShowThankYou(false)}
+              className="mt-6 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold rounded-xl text-sm transition-colors"
+            >
+              סגור
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

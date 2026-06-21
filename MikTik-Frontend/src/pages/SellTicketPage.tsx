@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, Upload, Info, CheckCircle, X, FileText, Image, Zap } from 'lucide-react';
+import { ShieldCheck, Upload, Info, CheckCircle, X, FileText, Image, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const API = 'http://localhost:5000/api';
@@ -36,6 +36,12 @@ const labelClass = "block text-xs font-semibold uppercase tracking-wider text-sl
 interface SelectedFile {
   file: File;
   preview: string | null;
+}
+
+interface SeatDetail {
+  section: string;
+  row: string;
+  seat: string;
 }
 
 function formatBytes(bytes: number) {
@@ -111,22 +117,45 @@ export default function SellTicketPage() {
   const { t } = useLanguage();
   const [form, setForm] = useState({
     event: '', category: '', date: '', venue: '', city: '',
-    section: '', row: '', qty: '1', price: '', originalPrice: '', description: '',
-    instant: false,
+    qty: '1', price: '', originalPrice: '', description: '',
+    bundleOnly: false,
   });
+  const [seatDetails, setSeatDetails] = useState<SeatDetail[]>([{ section: '', row: '', seat: '' }]);
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [dragging, setDragging] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fileError, setFileError] = useState('');
 
   const today = new Date().toISOString().split('T')[0];
 
   const set = (k: keyof typeof form) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => setForm(f => ({ ...f, [k]: e.target.value }));
+  ) => {
+    const val = e.target.value;
+    setForm(f => ({ ...f, [k]: val }));
+    if (k === 'qty') {
+      const n = Number(val) || 1;
+      setSeatDetails(prev => {
+        const copy = [...prev];
+        while (copy.length < n) copy.push({ section: '', row: '', seat: '' });
+        return copy.slice(0, n);
+      });
+      setSelectedFiles(prev => {
+        const trimmed = prev.slice(0, n);
+        prev.slice(n).forEach(f => { if (f.preview) URL.revokeObjectURL(f.preview); });
+        return trimmed;
+      });
+    }
+  };
+
+  const setSeat = (index: number, field: keyof SeatDetail, value: string) => {
+    setSeatDetails(prev => prev.map((sd, i) => i === index ? { ...sd, [field]: value } : sd));
+  };
 
   const addFiles = useCallback((incoming: FileList | File[]) => {
+    const limit = Number(form.qty) || 1;
     const allowed = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
     const newEntries: SelectedFile[] = [];
     Array.from(incoming).forEach(file => {
@@ -137,9 +166,14 @@ export default function SellTicketPage() {
     });
     setSelectedFiles(prev => {
       const combined = [...prev, ...newEntries];
-      return combined.slice(0, 5);
+      if (combined.length > limit) {
+        setFileError(t('sell.fileLimitExceeded').replace('{n}', String(limit)));
+        return combined.slice(0, limit);
+      }
+      setFileError('');
+      return combined;
     });
-  }, []);
+  }, [form.qty, t]);
 
   const removeFile = (index: number) => {
     setSelectedFiles(prev => {
@@ -148,6 +182,7 @@ export default function SellTicketPage() {
       updated.splice(index, 1);
       return updated;
     });
+    setFileError('');
   };
 
   const onDrop = (e: React.DragEvent) => {
@@ -172,6 +207,19 @@ export default function SellTicketPage() {
       setError(t('sell.pastDate'));
       return;
     }
+    if (seatDetails.some(sd => !sd.section.trim() || !sd.row.trim() || !sd.seat.trim())) {
+      setError(t('sell.missingSeatDetails'));
+      return;
+    }
+    const seen = new Set<string>();
+    for (const sd of seatDetails) {
+      const key = `${sd.section.trim()}|${sd.row.trim()}|${sd.seat.trim()}`;
+      if (seen.has(key)) {
+        setError(t('sell.duplicateSeat'));
+        return;
+      }
+      seen.add(key);
+    }
 
     setLoading(true);
     try {
@@ -183,13 +231,12 @@ export default function SellTicketPage() {
       formData.append('date', form.date);
       formData.append('venue', form.venue);
       formData.append('city', form.city);
-      formData.append('section', form.section);
-      formData.append('row', form.row);
       formData.append('qty', form.qty);
+      formData.append('seatDetails', JSON.stringify(seatDetails));
       formData.append('price', form.price);
       if (form.originalPrice) formData.append('originalPrice', form.originalPrice);
       formData.append('description', form.description);
-      formData.append('instant', String(form.instant));
+      formData.append('bundleOnly', String(form.bundleOnly));
       selectedFiles.forEach(({ file }) => formData.append('files', file));
 
       const res = await fetch(`${API}/tickets`, {
@@ -229,7 +276,8 @@ export default function SellTicketPage() {
               onClick={() => {
                 setSubmitted(false);
                 setSelectedFiles([]);
-                setForm({ event: '', category: '', date: '', venue: '', city: '', section: '', row: '', qty: '1', price: '', originalPrice: '', description: '', instant: false });
+                setSeatDetails([{ section: '', row: '', seat: '' }]);
+                setForm({ event: '', category: '', date: '', venue: '', city: '', qty: '1', price: '', originalPrice: '', description: '', bundleOnly: false });
               }}
               className="w-full py-3 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-colors hover:bg-slate-200 dark:hover:bg-zinc-800"
             >
@@ -325,20 +373,60 @@ export default function SellTicketPage() {
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-6">
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-5">{t('sell.ticketDetails')}</h2>
             <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className={labelClass}>{t('sell.section')}</label>
-                  <input type="text" value={form.section} onChange={set('section')} placeholder={t('sell.sectionPlaceholder')} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>{t('sell.row')}</label>
-                  <input type="text" value={form.row} onChange={set('row')} placeholder={t('sell.rowPlaceholder')} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>{t('sell.qty')}</label>
-                  <select value={form.qty} onChange={set('qty')} className={inputClass}>
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(n => <option key={n}>{n}</option>)}
-                  </select>
+              <div>
+                <label className={labelClass}>{t('sell.qty')}</label>
+                <select value={form.qty} onChange={set('qty')} className={inputClass}>
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(n => <option key={n}>{n}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelClass}>{t('sell.seatDetailsLabel')}</label>
+                <div className="space-y-3">
+                  {seatDetails.map((sd, i) => (
+                    <div key={i} className="rounded-xl border border-slate-200 dark:border-white/10 p-4 space-y-3">
+                      {seatDetails.length > 1 && (
+                        <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">
+                          {t('sell.ticketLabel')} {i + 1}
+                        </p>
+                      )}
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className={labelClass}>{t('sell.section')}</label>
+                          <input
+                            type="text"
+                            value={sd.section}
+                            onChange={e => setSeat(i, 'section', e.target.value)}
+                            placeholder={t('sell.sectionPlaceholder')}
+                            required
+                            className={inputClass}
+                          />
+                        </div>
+                        <div>
+                          <label className={labelClass}>{t('sell.row')}</label>
+                          <input
+                            type="text"
+                            value={sd.row}
+                            onChange={e => setSeat(i, 'row', e.target.value)}
+                            placeholder={t('sell.rowPlaceholder')}
+                            required
+                            className={inputClass}
+                          />
+                        </div>
+                        <div>
+                          <label className={labelClass}>{t('sell.seat')}</label>
+                          <input
+                            type="text"
+                            value={sd.seat}
+                            onChange={e => setSeat(i, 'seat', e.target.value)}
+                            placeholder={t('sell.seatPlaceholder')}
+                            required
+                            className={inputClass}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -368,23 +456,26 @@ export default function SellTicketPage() {
                 />
               </div>
 
-              {/* Instant transfer toggle */}
-              <div className="flex items-center justify-between py-3 px-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl">
-                <div className="flex items-center gap-2.5">
-                  <Zap className="w-4 h-4 text-amber-500" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{t('sell.instantTransfer')}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{t('sell.instantTransferDesc')}</p>
+              {/* Bundle-only toggle — only relevant when selling more than 1 ticket */}
+              {Number(form.qty) > 1 && (
+                <div className="flex items-center justify-between py-3 px-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/40 rounded-xl">
+                  <div className="flex items-center gap-2.5">
+                    <Users className="w-4 h-4 text-indigo-500" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{t('sell.bundleOnly')}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{t('sell.bundleOnlyDesc')}</p>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, bundleOnly: !f.bundleOnly }))}
+                    className={`relative w-10 h-6 rounded-full transition-colors shrink-0 ${form.bundleOnly ? 'bg-indigo-500' : 'bg-slate-200 dark:bg-zinc-700'}`}
+                  >
+                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${form.bundleOnly ? 'left-5' : 'left-1'}`} />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, instant: !f.instant }))}
-                  className={`relative w-10 h-6 rounded-full transition-colors shrink-0 ${form.instant ? 'bg-amber-500' : 'bg-slate-200 dark:bg-zinc-700'}`}
-                >
-                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${form.instant ? 'left-5' : 'left-1'}`} />
-                </button>
-              </div>
+              )}
+
             </div>
           </div>
 
@@ -411,7 +502,7 @@ export default function SellTicketPage() {
               <span className="text-sm text-slate-500 dark:text-slate-400">
                 {t('sell.dropFiles')} <span className="text-indigo-600 dark:text-indigo-400 font-medium">{t('sell.clickUpload')}</span>
               </span>
-              <span className="text-xs text-slate-400">{t('sell.fileTypes')}</span>
+              <span className="text-xs text-slate-400">{t('sell.fileTypes')} · {t('sell.fileLimit')} {form.qty}</span>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -421,6 +512,12 @@ export default function SellTicketPage() {
                 onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }}
               />
             </div>
+
+            {fileError && (
+              <p className="mt-2 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                <X className="w-3 h-3 shrink-0" /> {fileError}
+              </p>
+            )}
 
             {/* File list */}
             {selectedFiles.length > 0 && (

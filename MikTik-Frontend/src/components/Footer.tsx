@@ -12,8 +12,8 @@ export default function Footer() {
       { label: t('footer.signIn'), to: '/login' },
       { label: t('footer.register'), to: '/register' },
     ] : []),
-    { label: t('footer.privacy'), to: '/' },
-    { label: t('footer.terms'), to: '/' },
+    { label: t('footer.privacy'), to: '/privacy-policy' },
+    { label: t('footer.terms'), to: '/terms-of-service' },
   ];
 
   const isSeller = user && user.permissionLevel >= 2;
