@@ -15,6 +15,7 @@ const notificationSchema = new mongoose.Schema(
         'seller_rejected',
         'report_opened',
         'report_updated',
+        'review_prompt',
       ],
       required: true,
     },

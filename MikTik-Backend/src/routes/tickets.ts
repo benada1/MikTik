@@ -116,7 +116,7 @@ router.get('/:id', async (req: any, res: any) => {
 // POST /api/tickets (authenticated, multipart/form-data)
 router.post('/', authMiddleware, upload.array('files', 5), async (req: any, res: any) => {
   try {
-    const { name, category, date, venue, city, qty, price, originalPrice, description, instant, bundleOnly, seatDetails: seatDetailsRaw } = req.body;
+    const { name, category, date, startTime, venue, city, qty, price, originalPrice, description, instant, bundleOnly, seatDetails: seatDetailsRaw } = req.body;
 
     if (!name || !category || !date || !venue || !city || !price) {
       if (req.files) {
@@ -170,6 +170,7 @@ router.post('/', authMiddleware, upload.array('files', 5), async (req: any, res:
       name: name.trim(),
       category,
       date: new Date(date),
+      startTime: startTime?.trim() || '',
       venue: venue.trim(),
       city: city.trim(),
       section: seatDetails[0]?.section?.trim() || '',

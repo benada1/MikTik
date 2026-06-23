@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Ticket, ShieldCheck, CheckCircle, Clock, XCircle, Download, ArrowRight, MapPin, Calendar } from 'lucide-react';
+import { Ticket, ShieldCheck, CheckCircle, Clock, XCircle, Download, ArrowRight, MapPin, Calendar, Star } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useNotifications } from '../context/NotificationContext';
 
 const API = 'http://localhost:5000/api';
 
@@ -40,11 +41,22 @@ const CAT_GRADIENT: Record<string, string> = {
 
 type FilterMode = 'all' | 'expired' | 'upcoming';
 
+interface ReviewState {
+  purchaseId: string;
+  eventName: string;
+  rating: number;
+  comment: string;
+  submitting: boolean;
+  submitted: boolean;
+}
+
 export default function BuyerDashboardPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterMode>('all');
+  const [reviewState, setReviewState] = useState<ReviewState | null>(null);
   const { t } = useLanguage();
+  const { notifications, markRead } = useNotifications();
 
   const STATUS_CFG = {
     confirmed: { label: t('status.confirmed'), icon: CheckCircle, classes: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' },
@@ -83,6 +95,38 @@ export default function BuyerDashboardPage() {
   const confirmed = purchases.filter(p => p.status === 'confirmed').length;
   const pending = purchases.filter(p => p.status === 'pending').length;
 
+  const reviewPrompts = notifications.filter(n => n.type === 'review_prompt' && !n.read);
+
+  const openReview = (notif: typeof notifications[0]) => {
+    const relatedPurchase = purchases.find(p => p.id === notif.relatedId || String(notif.relatedId) === p.id);
+    setReviewState({
+      purchaseId: String(notif.relatedId),
+      eventName: relatedPurchase?.ticket?.name || notif.message,
+      rating: 0,
+      comment: '',
+      submitting: false,
+      submitted: false,
+    });
+    markRead(notif._id);
+  };
+
+  const submitReview = async () => {
+    if (!reviewState || reviewState.rating === 0) return;
+    setReviewState(s => s ? { ...s, submitting: true } : s);
+    try {
+      const token = localStorage.getItem('tt_token');
+      const res = await fetch(`${API}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ purchaseId: reviewState.purchaseId, rating: reviewState.rating, comment: reviewState.comment }),
+      });
+      if (res.ok) setReviewState(s => s ? { ...s, submitted: true, submitting: false } : s);
+      else setReviewState(s => s ? { ...s, submitting: false } : s);
+    } catch {
+      setReviewState(s => s ? { ...s, submitting: false } : s);
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-zinc-950 min-h-screen">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -120,6 +164,26 @@ export default function BuyerDashboardPage() {
             {t('buyer.escrowNotice')}
           </p>
         </div>
+
+        {/* Review prompts */}
+        {reviewPrompts.length > 0 && (
+          <div className="mb-6 space-y-3">
+            {reviewPrompts.map(n => (
+              <button
+                key={n._id}
+                onClick={() => openReview(n)}
+                className="w-full flex items-center gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-2xl px-5 py-4 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors text-left"
+              >
+                <Star className="w-5 h-5 text-amber-500 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Rate your experience</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{n.message}</p>
+                </div>
+                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 shrink-0">Leave review →</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Filter tabs */}
         <div className="flex gap-2 mb-6">
@@ -249,6 +313,59 @@ export default function BuyerDashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Review modal */}
+      {reviewState && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => !reviewState.submitting && setReviewState(null)} />
+          <div className="relative w-full max-w-sm bg-white dark:bg-zinc-950 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-6">
+            {reviewState.submitted ? (
+              <div className="text-center py-4">
+                <div className="w-14 h-14 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Star className="w-7 h-7 text-amber-500 fill-amber-500" />
+                </div>
+                <h3 className="font-bold text-slate-900 dark:text-white mb-1">Thanks for your review!</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Your feedback helps keep the marketplace trustworthy.</p>
+                <button onClick={() => setReviewState(null)} className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-colors">Close</button>
+              </div>
+            ) : (
+              <>
+                <h3 className="font-bold text-slate-900 dark:text-white mb-1">Rate your experience</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-5 line-clamp-2">{reviewState.eventName}</p>
+
+                <div className="flex justify-center gap-2 mb-5">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <button key={i} onClick={() => setReviewState(s => s ? { ...s, rating: i } : s)}>
+                      <Star className={`w-8 h-8 transition-colors ${i <= reviewState.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-600 hover:text-amber-300'}`} />
+                    </button>
+                  ))}
+                </div>
+
+                <textarea
+                  value={reviewState.comment}
+                  onChange={e => setReviewState(s => s ? { ...s, comment: e.target.value } : s)}
+                  placeholder="Optional comment..."
+                  rows={3}
+                  className="w-full px-3 py-2.5 mb-4 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                />
+
+                <div className="flex gap-2">
+                  <button onClick={() => setReviewState(null)} className="flex-1 py-2.5 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors">
+                    Skip
+                  </button>
+                  <button
+                    onClick={submitReview}
+                    disabled={reviewState.rating === 0 || reviewState.submitting}
+                    className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-colors"
+                  >
+                    {reviewState.submitting ? 'Submitting...' : 'Submit'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

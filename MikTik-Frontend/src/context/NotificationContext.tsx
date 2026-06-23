@@ -10,6 +10,7 @@ export interface Notification {
   message: string;
   read: boolean;
   link?: string;
+  relatedId?: string;
   createdAt: string;
 }
 

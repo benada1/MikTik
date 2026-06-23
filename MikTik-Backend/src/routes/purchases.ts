@@ -1,8 +1,45 @@
 const express = require('express');
+const nodemailer = require('nodemailer');
 const Purchase = require('../models/Purchase');
 const Ticket = require('../models/Ticket');
 const Notification = require('../models/Notification');
+const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
+
+async function sendPurchaseConfirmationEmail(buyerEmail: string, buyerName: string, ticketName: string, venue: string, qty: number, totalPaid: number, orderId: string) {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return;
+  try {
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+    });
+    await transporter.sendMail({
+      from: `"MikTik" <${process.env.EMAIL_USER}>`,
+      to: buyerEmail,
+      subject: `Order confirmed: ${ticketName}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
+          <h2 style="margin-bottom:8px">Your order is confirmed! 🎟️</h2>
+          <p style="color:#555;margin-bottom:4px">Hi ${buyerName},</p>
+          <p style="color:#555;margin-bottom:24px">
+            Your purchase of <strong>${qty}x "${ticketName}"</strong> at <strong>${venue}</strong> has been confirmed.
+            Payment of <strong>₪${totalPaid.toLocaleString()}</strong> is held in escrow and will be released to the seller after the event.
+          </p>
+          <div style="background:#f8fafc;border-radius:8px;padding:16px;margin-bottom:24px">
+            <p style="margin:0;color:#64748b;font-size:14px">Order ID: <strong style="color:#1e293b">${orderId}</strong></p>
+          </div>
+          <p style="color:#999;font-size:12px">
+            If the ticket is invalid or not delivered, you are fully protected by MikTik Buyer Guarantee.
+          </p>
+        </div>
+      `,
+    });
+  } catch (err: any) {
+    console.error('[Email] Failed to send purchase confirmation:', err.message);
+  }
+}
 
 const router = express.Router();
 
@@ -44,6 +81,20 @@ router.post('/', authMiddleware, async (req: any, res: any) => {
     });
     purchase.orderNumber = `ORD-${purchase._id.toString().slice(-6).toUpperCase()}`;
     await purchase.save();
+
+    // Send confirmation email to buyer
+    const buyerUser = await User.findById(req.user.id).select('email name');
+    if (buyerUser?.email) {
+      sendPurchaseConfirmationEmail(
+        buyerUser.email,
+        buyerUser.name || 'there',
+        ticket.name,
+        ticket.venue,
+        qty,
+        totalPaid,
+        purchase.orderNumber,
+      );
+    }
 
     // Notify buyer: purchase confirmed
     await Notification.create({

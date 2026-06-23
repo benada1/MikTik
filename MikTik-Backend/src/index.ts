@@ -44,13 +44,22 @@ app.use('/api/reports', reportRoutes);
 const notificationRoutes = require('./routes/notifications');
 app.use('/api/notifications', notificationRoutes);
 
+// Admin routes
+const adminRoutes = require('./routes/admin');
+app.use('/api/admin', adminRoutes);
+
+// Review routes
+const reviewRoutes = require('./routes/reviews');
+app.use('/api/reviews', reviewRoutes);
+
 // Static page routes (privacy policy, terms of service)
 const staticPageRoutes = require('./routes/staticPages');
 app.use('/api/static-pages', staticPageRoutes);
 
-// Ensure Seller collection is created on startup
+// Ensure models are registered on startup
 require('./models/Seller');
 require('./models/Notification');
+require('./models/Review');
 
 app.get('/api/health', (req: any, res: any) => {
   res.json({ status: 'Backend is running!' });

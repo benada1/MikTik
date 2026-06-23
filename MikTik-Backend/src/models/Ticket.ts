@@ -11,6 +11,7 @@ const ticketSchema = new mongoose.Schema(
       enum: ['Concert', 'Sports', 'Theater', 'Festival', 'Comedy', 'Other'],
     },
     date: { type: Date, required: true },
+    startTime: { type: String, default: '' },
     venue: { type: String, required: true, trim: true },
     city: { type: String, required: true, trim: true },
     section: { type: String, default: '', trim: true },

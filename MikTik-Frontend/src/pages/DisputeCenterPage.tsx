@@ -49,7 +49,7 @@ export default function DisputeCenterPage() {
   useEffect(() => {
     if (!user) return;
     const token = localStorage.getItem('tt_token');
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
     const reportsUrl = isAdmin ? `${API}/reports` : `${API}/reports/my`;
 

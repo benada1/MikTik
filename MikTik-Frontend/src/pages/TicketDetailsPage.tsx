@@ -14,6 +14,7 @@ interface TicketDetail {
   date: string;
   month: string;
   day: string;
+  startTime?: string;
   venue: string;
   city: string;
   price: number;
@@ -29,6 +30,7 @@ interface TicketDetail {
   row: string;
   description: string;
   bundleOnly: boolean;
+  files?: string[];
 }
 
 const CAT_GRADIENT: Record<string, string> = {
@@ -136,6 +138,7 @@ export default function TicketDetailsPage() {
   const dateLabel = ticket.date
     ? new Date(ticket.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
     : `${ticket.month} ${ticket.day}`;
+  const dateTimeLabel = ticket.startTime ? `${dateLabel} · ${ticket.startTime}` : dateLabel;
 
   return (
     <div className="bg-white dark:bg-zinc-950 min-h-screen">
@@ -174,7 +177,7 @@ export default function TicketDetailsPage() {
               <h2 className="font-semibold text-slate-900 dark:text-white mb-4">{t('ticketDetails.eventDetails')}</h2>
               <div className="space-y-3">
                 {[
-                  { icon: Calendar, label: dateLabel },
+                  { icon: Calendar, label: dateTimeLabel },
                   { icon: MapPin, label: `${ticket.venue}, ${ticket.city}` },
                   { icon: Ticket, label: `${t('ticketDetails.section')} ${ticket.section}${ticket.row ? ` · ${t('ticketDetails.row')} ${ticket.row}` : ''}` },
                   { icon: Users, label: `${ticket.available} ${ticket.available !== 1 ? t('ticketDetails.tickets') : t('ticketDetails.ticket')} ${t('ticketDetails.available')}` },
@@ -247,14 +250,40 @@ export default function TicketDetailsPage() {
             <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-white/5 p-6">
 
               {bought ? (
-                <div className="text-center py-4">
-                  <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+                <div className="py-4">
+                  <div className="text-center mb-5">
+                    <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <h3 className="font-bold text-slate-900 dark:text-white mb-1">{t('ticketDetails.purchaseConfirmed')}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {qty > 1 ? t('ticketDetails.purchaseDescMulti') : t('ticketDetails.purchaseDescSingle')}
+                    </p>
                   </div>
-                  <h3 className="font-bold text-slate-900 dark:text-white mb-1">{t('ticketDetails.purchaseConfirmed')}</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
-                    {qty > 1 ? t('ticketDetails.purchaseDescMulti') : t('ticketDetails.purchaseDescSingle')}
-                  </p>
+                  {ticket.files && ticket.files.length > 0 && (
+                    <div className="mb-5 space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('ticketDetails.ticketFiles')}</p>
+                      {ticket.files.map((f, i) => {
+                        const url = `http://localhost:5000${f}`;
+                        const isImage = /\.(png|jpg|jpeg)$/i.test(f);
+                        return isImage ? (
+                          <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                            <img src={url} alt={`Ticket ${i + 1}`} className="w-full rounded-xl border border-slate-200 dark:border-white/10 object-cover max-h-40" />
+                          </a>
+                        ) : (
+                          <a
+                            key={i}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
+                          >
+                            {t('ticketDetails.downloadFile')} {i + 1}
+                          </a>
+                        );
+                      })}
+                    </div>
+                  )}
                   <button
                     onClick={() => navigate('/buyer-dashboard')}
                     className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold py-3 rounded-xl transition-colors text-sm"

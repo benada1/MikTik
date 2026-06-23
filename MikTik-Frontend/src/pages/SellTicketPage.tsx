@@ -7,27 +7,32 @@ const API = 'http://localhost:5000/api';
 const CATEGORIES = ['Concert', 'Sports', 'Theater', 'Festival', 'Comedy', 'Other'];
 
 const ISRAELI_CITIES = [
-  'Acre', 'Afula', 'Arad', 'Ariel', 'Ashdod', 'Ashkelon', 'Bat Yam', 'Beersheba',
-  'Beit Shemesh', 'Bnei Brak', 'Dimona', 'Eilat', 'Givatayim', 'Hadera', 'Haifa',
-  'Harish', 'Herzliya', 'Hod HaSharon', 'Holon', 'Jerusalem', 'Kfar Saba', 'Kiryat Ata',
-  'Kiryat Gat', 'Kiryat Motzkin', 'Lod', "Modi'in", 'Nahariya', 'Nazareth', 'Netanya',
-  'Ness Ziona', 'Or Yehuda', 'Petah Tikva', "Ra'anana", 'Ramat Gan', 'Ramat HaSharon',
-  'Ramla', 'Rehovot', 'Rishon LeZion', 'Rosh HaAyin', 'Shoham', 'Tel Aviv-Yafo',
-  'Tiberias', 'Yavne',
+  'תל אביב-יפו', 'ירושלים', 'חיפה', 'ראשון לציון', 'פתח תקווה', 'אשדוד', 'נתניה',
+  'באר שבע', 'בני ברק', 'חולון', 'רמת גן', 'אשקלון', 'רחובות', 'בת ים', 'בית שמש',
+  'כפר סבא', 'הרצליה', 'חדרה', 'מודיעין-מכבים-רעות', 'לוד', 'רמלה', 'נצרת',
+  'עכו', 'אילת', 'נהריה', 'רעננה', 'גבעתיים', 'קריית גת', 'יבנה', 'נס ציונה',
+  'רמת השרון', 'הוד השרון', 'אור יהודה', 'טבריה', 'צפת', 'קריית מוצקין',
+  'קריית אתא', 'קריית ביאליק', 'קריית ים', 'קרית שמונה', 'כרמיאל',
+  'נוף הגליל', 'שדרות', 'עפולה', 'דימונה', 'ערד', 'שוהם', 'יקנעם עילית',
+  'אופקים', 'מגדל העמק', 'טמרה', 'סח\'נין', 'אום אל-פחם', 'שפרעם',
+  'ראש העין', 'אריאל', 'מעלה אדומים', 'קצרין', 'מצפה רמון', 'אופקים',
+  'גדרה', 'יהוד-מונוסון', 'אור עקיבא', 'עתלית', 'זכרון יעקב',
+  'פרדס חנה-כרכור', 'בנימינה-גבעת עדה', 'עמק יזרעאל', 'מגידו',
 ];
 
 const ISRAELI_VENUES = [
-  'Barby Club', 'Beit Lessin Theater', 'Beersheba Theater', 'Bloomfield Stadium',
-  'Caesarea Amphitheatre', 'Cameri Theater', 'Charles Bronfman Auditorium',
-  'Ein Gev Amphitheatre', 'Expo Tel Aviv', 'Habima Theater', 'Haifa Auditorium',
-  'Haifa Theater', 'HaMoshava Amphitheatre', 'Jerusalem Arena',
-  'Jerusalem International Convention Centre', 'Jerusalem Theater',
-  'Kiryat Eliezer Stadium', 'Live Park Rishon LeZion', 'Mann Auditorium',
-  'Menora Mivtachim Arena', 'Netanya Stadium', 'Nokia Arena',
-  'Ramat Gan Stadium', 'Sammy Ofer Stadium', 'Sultan\'s Pool',
-  'Suzanne Dellal Centre', 'Teddy Stadium', 'Tel Aviv Convention Center',
-  'Turner Stadium', 'Yarkon Park', 'Zappa Herzliya', 'Zappa Jerusalem',
-  'Zappa Tel Aviv',
+  'היכל מנורה מבטחים', 'אצטדיון רמת גן', 'אצטדיון בלומפילד', 'אצטדיון סמי עופר',
+  'נוקיה אריינה', 'אקספו תל אביב', 'פארק הירקון', 'אמפיתיאטרון קיסריה',
+  'לייב פארק ראשון לציון', 'תיאטרון הבימה', 'תיאטרון קמרי', 'תיאטרון בית לסין',
+  'מרכז סוזן דלל', 'אולם מאן', 'ברבי קלאב', 'זאפה תל אביב', 'זאפה ירושלים',
+  'זאפה הרצליה', 'בריכת הסולטן', 'אמפיתיאטרון עין גב', 'ארנה ירושלים',
+  'בינייני האומה', 'תיאטרון ירושלים', 'אולם חיפה', 'תיאטרון חיפה',
+  'אצטדיון קריית אליעזר', 'מרכז כנסים תל אביב', 'אצטדיון טרנר', 'אצטדיון נתניה',
+  'גן יחד', 'אמפיתיאטרון המושבה', 'תיאטרון באר שבע', 'אצטדיון טדי',
+  'אצטדיון הפועל ירושלים', 'אצטדיון דוחא', 'אצטדיון עירוני אשדוד',
+  'אצטדיון עירוני נתניה', 'אמפיתיאטרון הוד השרון', 'אולם ספורט ראשון לציון',
+  'היכל הספורט וינגייט', 'מרכז פרס לשלום וחדשנות', 'בית ציוני אמריקה',
+  'הקאמרי - תיאטרון תל אביב', 'אולם המוזיקה ירושלים', 'מרכז קנדה ירושלים',
 ];
 
 const inputClass = "w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors";
@@ -116,7 +121,7 @@ export default function SellTicketPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
   const [form, setForm] = useState({
-    event: '', category: '', date: '', venue: '', city: '',
+    event: '', category: '', date: '', startTime: '', venue: '', city: '',
     qty: '1', price: '', originalPrice: '', description: '',
     bundleOnly: false,
   });
@@ -260,6 +265,7 @@ export default function SellTicketPage() {
       formData.append('name', form.event);
       formData.append('category', form.category);
       formData.append('date', form.date);
+      formData.append('startTime', form.startTime);
       formData.append('venue', form.venue);
       formData.append('city', form.city);
       formData.append('qty', form.qty);
@@ -308,7 +314,7 @@ export default function SellTicketPage() {
                 setSubmitted(false);
                 setSelectedFiles([]);
                 setSeatDetails([{ section: '', row: '', seat: '' }]);
-                setForm({ event: '', category: '', date: '', venue: '', city: '', qty: '1', price: '', originalPrice: '', description: '', bundleOnly: false });
+                setForm({ event: '', category: '', date: '', startTime: '', venue: '', city: '', qty: '1', price: '', originalPrice: '', description: '', bundleOnly: false });
               }}
               className="w-full py-3 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-colors hover:bg-slate-200 dark:hover:bg-zinc-800"
             >
@@ -370,6 +376,18 @@ export default function SellTicketPage() {
                     value={form.date}
                     onChange={set('date')}
                     min={today}
+                    required
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>{t('sell.eventTime')}</label>
+                  <input
+                    type="time"
+                    value={form.startTime}
+                    onChange={set('startTime')}
                     required
                     className={inputClass}
                   />

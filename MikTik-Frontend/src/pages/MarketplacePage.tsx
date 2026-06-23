@@ -11,6 +11,7 @@ interface Ticket {
   category: string;
   month: string;
   day: string;
+  startTime?: string;
   venue: string;
   city: string;
   price: number;
@@ -25,7 +26,7 @@ interface Ticket {
   bundleOnly: boolean;
 }
 
-const CITIES = ['All Cities', 'Tel Aviv', 'Jerusalem', 'Haifa', 'Beer Sheva', 'Herzliya'];
+const CITIES = ['All Cities', 'תל אביב-יפו', 'ירושלים', 'חיפה', 'באר שבע', 'הרצליה', 'נתניה', 'ראשון לציון', 'רמת גן', 'פתח תקווה', 'אשדוד'];
 
 const CAT_GRADIENT: Record<string, string> = {
   Concert: 'from-violet-950 via-purple-900 to-indigo-950',
@@ -206,6 +207,7 @@ export default function MarketplacePage() {
                       <div className="absolute top-3 right-3 text-center bg-black/40 backdrop-blur-md rounded-xl px-2.5 py-1.5 border border-white/10">
                         <div className="text-[9px] font-bold text-white/60 uppercase tracking-widest">{tk.month}</div>
                         <div className="text-lg font-black text-white leading-none">{tk.day}</div>
+                        {tk.startTime && <div className="text-[9px] font-semibold text-white/70 mt-0.5">{tk.startTime}</div>}
                       </div>
 
                       {/* Top-left badges */}

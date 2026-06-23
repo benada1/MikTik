@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const Purchase = require('../models/Purchase');
 const Ticket = require('../models/Ticket');
 const Notification = require('../models/Notification');
+const Review = require('../models/Review');
 
 // Runs daily at 9:00 AM to send event reminders and expired listing alerts.
 function scheduleNotifications() {
@@ -9,6 +10,7 @@ function scheduleNotifications() {
     try {
       await sendEventReminders();
       await sendExpiredListingAlerts();
+      await sendReviewPrompts();
     } catch (err) {
       console.error('Notification scheduler error:', err);
     }
@@ -102,6 +104,42 @@ async function sendExpiredListingAlerts() {
       message: `Your listing "${ticket.name}" at ${ticket.venue} passed its event date without being fully sold.`,
       link: '/seller-dashboard',
       relatedId: ticket._id,
+    });
+  }
+}
+
+async function sendReviewPrompts() {
+  const now = new Date();
+  // Yesterday's events: date between 24h and 48h ago
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(0, 0, 0, 0);
+  const twoDaysAgo = new Date(yesterday);
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 1);
+
+  const tickets = await Ticket.find({ date: { $gte: twoDaysAgo, $lt: yesterday } });
+  if (!tickets.length) return;
+
+  const ticketIds = tickets.map((t: any) => t._id);
+  const purchases = await Purchase.find({
+    ticket: { $in: ticketIds },
+    status: 'confirmed',
+  }).populate('ticket', 'name seller');
+
+  for (const purchase of purchases) {
+    if (!purchase.ticket) continue;
+    const already = await Notification.findOne({ type: 'review_prompt', relatedId: purchase._id });
+    if (already) continue;
+    const reviewed = await Review.findOne({ purchase: purchase._id });
+    if (reviewed) continue;
+
+    await Notification.create({
+      user: purchase.buyer,
+      type: 'review_prompt',
+      title: 'How was your experience?',
+      message: `Rate your experience for "${purchase.ticket.name}". Your feedback helps other buyers.`,
+      link: '/buyer-dashboard',
+      relatedId: purchase._id,
     });
   }
 }

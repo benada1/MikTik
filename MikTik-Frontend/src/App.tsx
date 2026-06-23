@@ -12,7 +12,6 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import BuyerDashboardPage from './pages/BuyerDashboardPage';
 import SellerDashboardPage from './pages/SellerDashboardPage';
 import SellTicketPage from './pages/SellTicketPage';
-import WalletPage from './pages/WalletPage';
 import DisputeCenterPage from './pages/DisputeCenterPage';
 import AdminPanelPage from './pages/AdminPanelPage';
 import BecomeSellerPage from './pages/BecomeSellerPage';
@@ -42,7 +41,6 @@ function App() {
                 <Route path="/seller-dashboard" element={<PrivateRoute><SellerDashboardPage /></PrivateRoute>} />
                 <Route path="/sell" element={<PrivateRoute minLevel={2}><SellTicketPage /></PrivateRoute>} />
                 <Route path="/become-seller" element={<PrivateRoute><BecomeSellerPage /></PrivateRoute>} />
-                <Route path="/wallet" element={<PrivateRoute><WalletPage /></PrivateRoute>} />
                 <Route path="/dispute-center" element={<PrivateRoute><DisputeCenterPage /></PrivateRoute>} />
                 <Route path="/admin" element={<PrivateRoute minLevel={3}><AdminPanelPage /></PrivateRoute>} />
                 <Route path="/privacy-policy" element={<StaticPageView />} />

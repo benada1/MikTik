@@ -29,7 +29,6 @@ export default function Footer() {
     ],
     [t('footer.section.support')]: [
       { label: t('footer.disputeCenter'), to: '/dispute-center' },
-      { label: t('footer.wallet'), to: '/wallet' },
       { label: t('footer.howItWorks'), to: '/' },
       { label: t('footer.safetyGuide'), to: '/' },
     ],
