@@ -19,14 +19,21 @@ router.post('/', authMiddleware, async (req: any, res: any) => {
     const purchase = await Purchase.findOne({
       orderNumber: orderId.trim().toUpperCase(),
       buyer: req.user.id,
-    }).populate('ticket', 'name date seller');
+    }).populate('ticket', 'name date startTime seller');
 
     if (!purchase) {
       return res.status(400).json({ error: 'No order with that ID found on your account' });
     }
 
     if (purchase.ticket?.date) {
-      const deadline = new Date(new Date(purchase.ticket.date).getTime() + 30 * 60 * 1000);
+      const eventDate = new Date(purchase.ticket.date);
+      if (purchase.ticket.startTime) {
+        const [hours, minutes] = purchase.ticket.startTime.split(':').map(Number);
+        if (!isNaN(hours) && !isNaN(minutes)) {
+          eventDate.setHours(hours, minutes, 0, 0);
+        }
+      }
+      const deadline = new Date(eventDate.getTime() + 30 * 60 * 1000);
       if (new Date() > deadline) {
         return res.status(400).json({ error: 'The reporting window for this event has closed (reports must be submitted within 30 minutes of the event start)' });
       }

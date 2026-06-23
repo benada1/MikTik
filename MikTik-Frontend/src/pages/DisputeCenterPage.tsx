@@ -9,7 +9,7 @@ interface Purchase {
   id: string;
   orderId: string;
   orderNumber: string;
-  ticket: { name: string; date: string } | null;
+  ticket: { name: string; date: string; startTime?: string } | null;
   totalPaid: number;
   createdAt: string;
 }
@@ -117,7 +117,12 @@ export default function DisputeCenterPage() {
 
   const isWithinReportingWindow = (p: Purchase) => {
     if (!p.ticket?.date) return true;
-    const deadline = new Date(new Date(p.ticket.date).getTime() + 30 * 60 * 1000);
+    const eventDate = new Date(p.ticket.date);
+    if (p.ticket.startTime) {
+      const [hours, minutes] = p.ticket.startTime.split(':').map(Number);
+      if (!isNaN(hours) && !isNaN(minutes)) eventDate.setHours(hours, minutes, 0, 0);
+    }
+    const deadline = new Date(eventDate.getTime() + 30 * 60 * 1000);
     return new Date() <= deadline;
   };
 
