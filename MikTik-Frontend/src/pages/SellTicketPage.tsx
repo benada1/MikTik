@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Upload, Info, CheckCircle, X, FileText, Image, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -128,6 +128,7 @@ export default function SellTicketPage() {
   const [error, setError] = useState('');
   const [fileError, setFileError] = useState('');
   const [commissionRate, setCommissionRate] = useState(5);
+  const errorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('tt_token');
@@ -137,6 +138,26 @@ export default function SellTicketPage() {
       .then(data => { if (typeof data.commissionRate === 'number') setCommissionRate(data.commissionRate); })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (error) errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [error]);
+
+  const duplicateSeatIndices = useMemo(() => {
+    const seen = new Map<string, number>();
+    const dupes = new Set<number>();
+    seatDetails.forEach((sd, i) => {
+      if (!sd.section.trim() || !sd.row.trim() || !sd.seat.trim()) return;
+      const key = `${sd.section.trim()}|${sd.row.trim()}|${sd.seat.trim()}`;
+      if (seen.has(key)) {
+        dupes.add(i);
+        dupes.add(seen.get(key)!);
+      } else {
+        seen.set(key, i);
+      }
+    });
+    return dupes;
+  }, [seatDetails]);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -319,7 +340,7 @@ export default function SellTicketPage() {
         </div>
 
         {error && (
-          <div className="mb-6 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
+          <div ref={errorRef} className="mb-6 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
             {error}
           </div>
         )}
@@ -393,12 +414,21 @@ export default function SellTicketPage() {
               <div>
                 <label className={labelClass}>{t('sell.seatDetailsLabel')}</label>
                 <div className="space-y-3">
-                  {seatDetails.map((sd, i) => (
-                    <div key={i} className="rounded-xl border border-slate-200 dark:border-white/10 p-4 space-y-3">
+                  {seatDetails.map((sd, i) => {
+                    const isDuplicate = duplicateSeatIndices.has(i);
+                    return (
+                    <div key={i} className={`rounded-xl border p-4 space-y-3 ${isDuplicate ? 'border-red-400 dark:border-red-600 bg-red-50/50 dark:bg-red-900/10' : 'border-slate-200 dark:border-white/10'}`}>
                       {seatDetails.length > 1 && (
-                        <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">
-                          {t('sell.ticketLabel')} {i + 1}
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">
+                            {t('sell.ticketLabel')} {i + 1}
+                          </p>
+                          {isDuplicate && (
+                            <p className="text-xs font-semibold text-red-600 dark:text-red-400">
+                              {t('sell.duplicateSeat')}
+                            </p>
+                          )}
+                        </div>
                       )}
                       <div className="grid grid-cols-3 gap-3">
                         <div>
@@ -436,7 +466,7 @@ export default function SellTicketPage() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  ); })}
                 </div>
               </div>
 
