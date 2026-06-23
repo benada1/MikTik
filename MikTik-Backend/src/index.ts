@@ -32,6 +32,10 @@ app.use('/api/purchases', purchaseRoutes);
 const sellerApplicationRoutes = require('./routes/sellerApplications');
 app.use('/api/seller-applications', sellerApplicationRoutes);
 
+// Seller routes (commission management)
+const sellerRoutes = require('./routes/sellers');
+app.use('/api/sellers', sellerRoutes);
+
 // Report / dispute routes
 const reportRoutes = require('./routes/reports');
 app.use('/api/reports', reportRoutes);

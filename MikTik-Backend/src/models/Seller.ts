@@ -35,6 +35,7 @@ const sellerSchema = new mongoose.Schema(
       rejectionReason: { type: String, default: '' },
     },
 
+    commissionRate: { type: Number, default: 5, min: 0, max: 100 },
     rating: { type: Number, default: 0, min: 0, max: 5 },
     totalReviews: { type: Number, default: 0 },
     totalSales: { type: Number, default: 0 },

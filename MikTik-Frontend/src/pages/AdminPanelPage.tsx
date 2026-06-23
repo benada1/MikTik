@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShieldCheck, Store, CheckCircle, XCircle, ChevronRight, X, UserX } from 'lucide-react';
+import { ShieldCheck, Store, CheckCircle, XCircle, ChevronRight, X, UserX, Percent } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const API = 'http://localhost:5000/api';
@@ -35,9 +35,32 @@ export default function AdminPanelPage() {
   const [selected, setSelected] = useState<SellerApp | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [sellerCommission, setSellerCommission] = useState<number | null>(null);
+  const [commissionInput, setCommissionInput] = useState('');
+  const [commissionLoading, setCommissionLoading] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => { fetchApplications(); }, []);
+
+  useEffect(() => {
+    if (!selected || selected.status !== 'approved') {
+      setSellerCommission(null);
+      setCommissionInput('');
+      return;
+    }
+    const token = localStorage.getItem('tt_token');
+    fetch(`${API}/sellers/by-user/${selected.user._id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (typeof data.commissionRate === 'number') {
+          setSellerCommission(data.commissionRate);
+          setCommissionInput(String(data.commissionRate));
+        }
+      })
+      .catch(() => {});
+  }, [selected]);
 
   const fetchApplications = async () => {
     setLoading(true);
@@ -96,6 +119,28 @@ export default function AdminPanelPage() {
       setSelected(null);
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleUpdateCommission = async () => {
+    if (!selected) return;
+    const rate = Number(commissionInput);
+    if (isNaN(rate) || rate < 0 || rate > 100) return;
+    setCommissionLoading(true);
+    try {
+      const token = localStorage.getItem('tt_token');
+      const res = await fetch(`${API}/sellers/by-user/${selected.user._id}/commission`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ commissionRate: rate }),
+      });
+      const data = await res.json();
+      if (typeof data.commissionRate === 'number') {
+        setSellerCommission(data.commissionRate);
+        setCommissionInput(String(data.commissionRate));
+      }
+    } finally {
+      setCommissionLoading(false);
     }
   };
 
@@ -355,6 +400,41 @@ export default function AdminPanelPage() {
                   >
                     <CheckCircle className="w-4 h-4" /> {t('admin.restoreSeller')}
                   </button>
+                </div>
+              )}
+
+              {/* Commission — approved sellers only */}
+              {selected.status === 'approved' && sellerCommission !== null && (
+                <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-white/5">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Percent className="w-3.5 h-3.5 text-indigo-500" />
+                    <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('admin.commissionRate')}</p>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{t('admin.commissionDesc')}</p>
+                  <div className="flex gap-2 items-center">
+                    <div className="relative flex-1">
+                      <input
+                        type="number"
+                        value={commissionInput}
+                        onChange={e => setCommissionInput(e.target.value)}
+                        min="0"
+                        max="100"
+                        step="0.5"
+                        className="w-full px-3 py-2.5 pr-8 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+                    </div>
+                    <button
+                      onClick={handleUpdateCommission}
+                      disabled={commissionLoading || String(sellerCommission) === commissionInput}
+                      className="px-4 py-2.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded-xl text-sm font-semibold hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors disabled:opacity-50"
+                    >
+                      {commissionLoading ? '...' : t('admin.saveCommission')}
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    {t('admin.currentCommission').replace('{rate}', String(sellerCommission))}
+                  </p>
                 </div>
               )}
 

@@ -127,6 +127,16 @@ export default function SellTicketPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [fileError, setFileError] = useState('');
+  const [commissionRate, setCommissionRate] = useState(5);
+
+  useEffect(() => {
+    const token = localStorage.getItem('tt_token');
+    if (!token) return;
+    fetch(`${API}/sellers/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => { if (typeof data.commissionRate === 'number') setCommissionRate(data.commissionRate); })
+      .catch(() => {});
+  }, []);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -435,7 +445,7 @@ export default function SellTicketPage() {
                   <label className={labelClass}>{t('sell.askingPrice')}</label>
                   <input type="number" value={form.price} onChange={set('price')} placeholder="250" min="1" required className={inputClass} />
                   <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                    <Info className="w-3 h-3" /> {t('sell.serviceFee')}
+                    <Info className="w-3 h-3" /> {t('sell.serviceFee').replace('{rate}', String(commissionRate))}
                   </p>
                 </div>
                 <div>
@@ -444,6 +454,23 @@ export default function SellTicketPage() {
                   <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{t('sell.discountBadge')}</p>
                 </div>
               </div>
+
+              {Number(form.price) > 0 && (
+                <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/40 rounded-xl px-4 py-3 space-y-1.5">
+                  <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400">
+                    <span>{t('sell.listedPrice')}</span>
+                    <span>₪{Number(form.price).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400">
+                    <span>{t('sell.commissionFee').replace('{rate}', String(commissionRate))}</span>
+                    <span className="text-red-500 dark:text-red-400">−₪{Math.round(Number(form.price) * commissionRate / 100).toLocaleString()}</span>
+                  </div>
+                  <div className="border-t border-indigo-200 dark:border-indigo-700/50 pt-1.5 flex justify-between font-semibold text-slate-900 dark:text-white text-sm">
+                    <span>{t('sell.youWillReceive')}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">₪{Math.round(Number(form.price) * (1 - commissionRate / 100)).toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className={labelClass}>{t('sell.description')}</label>
