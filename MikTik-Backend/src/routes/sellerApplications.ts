@@ -120,10 +120,24 @@ router.get('/my', authMiddleware, async (req: any, res: any) => {
 // GET /api/seller-applications — admin only
 router.get('/', authMiddleware, authMiddleware.requireAdmin, async (req: any, res: any) => {
   try {
-    const applications = await SellerApplication.find()
-      .populate('user', 'name email')
-      .sort({ createdAt: -1 });
-    res.json({ applications });
+    const { page: pageParam, status } = req.query;
+    const limit = 15;
+    const page = Math.max(1, Number(pageParam) || 1);
+    const skip = (page - 1) * limit;
+
+    const query: any = {};
+    if (status && status !== 'all') query.status = status;
+
+    const [applications, total] = await Promise.all([
+      SellerApplication.find(query)
+        .populate('user', 'name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      SellerApplication.countDocuments(query),
+    ]);
+
+    res.json({ applications, total, pages: Math.ceil(total / limit) || 1, page });
   } catch {
     res.status(500).json({ error: 'Server error' });
   }

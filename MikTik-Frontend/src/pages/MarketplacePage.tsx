@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Search, ShieldCheck, Eye, X, MapPin } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import Pagination from '../components/Pagination';
 
 const API = 'http://localhost:5000/api';
 
@@ -62,6 +63,9 @@ export default function MarketplacePage() {
   const [sort, setSort] = useState('newest');
   const [maxPrice, setMaxPrice] = useState(5000);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const catAll = t('marketplace.catAll');
   const hasFilters = category !== catAll || city !== 'All Cities' || maxPrice < 5000 || verifiedOnly || search;
@@ -76,7 +80,7 @@ export default function MarketplacePage() {
 
   const clearFilters = () => {
     setCategory(catAll); setCity('All Cities'); setMaxPrice(5000);
-    setVerifiedOnly(false); setSearch('');
+    setVerifiedOnly(false); setSearch(''); setPage(1);
   };
 
   useEffect(() => {
@@ -89,16 +93,21 @@ export default function MarketplacePage() {
     if (verifiedOnly) params.set('verified', 'true');
     if (search) params.set('search', search);
     if (sort !== 'newest') params.set('sort', sort);
+    params.set('page', String(page));
 
     const token = localStorage.getItem('tt_token');
     fetch(`${API}/tickets?${params.toString()}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then(r => r.json())
-      .then(data => setTickets(data.tickets || []))
-      .catch(() => setTickets([]))
+      .then(data => {
+        setTickets(data.tickets || []);
+        setTotal(data.total ?? 0);
+        setPages(data.pages ?? 1);
+      })
+      .catch(() => { setTickets([]); setTotal(0); setPages(1); })
       .finally(() => setLoading(false));
-  }, [category, city, maxPrice, verifiedOnly, search, sort]);
+  }, [category, city, maxPrice, verifiedOnly, search, sort, page]);
 
   return (
     <div className="bg-white dark:bg-zinc-950 min-h-screen">
@@ -114,7 +123,7 @@ export default function MarketplacePage() {
         <div className="flex gap-3 mb-4">
           <select
             value={sort}
-            onChange={e => setSort(e.target.value)}
+            onChange={e => { setSort(e.target.value); setPage(1); }}
             className="px-3 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shrink-0"
           >
             <option value="newest">{t('marketplace.newestFirst')}</option>
@@ -128,7 +137,7 @@ export default function MarketplacePage() {
               type="text"
               placeholder={t('marketplace.searchPlaceholder')}
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
               className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             {search && (
@@ -144,7 +153,7 @@ export default function MarketplacePage() {
           {CATEGORIES.map(c => (
             <button
               key={c}
-              onClick={() => setCategory(c)}
+              onClick={() => { setCategory(c); setPage(1); }}
               className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                 category === c
                   ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-sm shadow-indigo-500/30'
@@ -162,7 +171,7 @@ export default function MarketplacePage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {loading ? t('marketplace.loading') : <><span className="font-semibold text-slate-900 dark:text-white">{tickets.length}</span> {t('marketplace.ticketsFound')}</>}
+                {loading ? t('marketplace.loading') : <><span className="font-semibold text-slate-900 dark:text-white">{total}</span> {t('marketplace.ticketsFound')}</>}
               </p>
               {hasFilters && (
                 <button onClick={clearFilters} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
@@ -190,6 +199,11 @@ export default function MarketplacePage() {
                 <button onClick={clearFilters} className="mt-3 text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
                   {t('marketplace.clearAllFilters')}
                 </button>
+              </div>
+            ) : tickets.length === 0 && page > 1 ? (
+              <div className="text-center py-24">
+                <p className="font-medium text-slate-500 dark:text-slate-400">No tickets on this page.</p>
+                <button onClick={() => setPage(1)} className="mt-3 text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Back to page 1</button>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -268,6 +282,8 @@ export default function MarketplacePage() {
                 ))}
               </div>
             )}
+
+            <Pagination page={page} pages={pages} onPageChange={setPage} />
           </div>
 
           {/* Sidebar */}
@@ -279,7 +295,7 @@ export default function MarketplacePage() {
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('marketplace.category')}</label>
                   <select
                     value={category}
-                    onChange={e => setCategory(e.target.value)}
+                    onChange={e => { setCategory(e.target.value); setPage(1); }}
                     className="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     {CATEGORIES.map(c => <option key={c} value={c}>{c === catAll ? t('marketplace.allCategories') : c}</option>)}
@@ -291,7 +307,7 @@ export default function MarketplacePage() {
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('marketplace.city')}</label>
                   <select
                     value={city}
-                    onChange={e => setCity(e.target.value)}
+                    onChange={e => { setCity(e.target.value); setPage(1); }}
                     className="w-full px-3 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     {CITIES.map(c => <option key={c}>{c === 'All Cities' ? t('marketplace.allCities') : c}</option>)}
@@ -304,7 +320,7 @@ export default function MarketplacePage() {
                     {t('marketplace.priceRange')} (₪0 – ₪{maxPrice.toLocaleString()})
                   </label>
                   <input type="range" min={0} max={5000} step={50} value={maxPrice}
-                    onChange={e => setMaxPrice(Number(e.target.value))} className="w-full accent-indigo-500" />
+                    onChange={e => { setMaxPrice(Number(e.target.value)); setPage(1); }} className="w-full accent-indigo-500" />
                   <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500 mt-1">
                     <span>₪0</span><span>₪5,000</span>
                   </div>
@@ -315,7 +331,7 @@ export default function MarketplacePage() {
                   <label className="flex items-center justify-between cursor-pointer">
                     <span className="text-sm text-slate-700 dark:text-slate-300">{t('marketplace.verifiedOnly')}</span>
                     <button
-                      onClick={() => setVerifiedOnly(v => !v)}
+                      onClick={() => { setVerifiedOnly(v => !v); setPage(1); }}
                       className={`relative w-9 h-5 rounded-full transition-colors ${verifiedOnly ? 'bg-indigo-600 dark:bg-indigo-500' : 'bg-slate-200 dark:bg-zinc-700'}`}
                     >
                       <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${verifiedOnly ? 'left-4' : 'left-0.5'}`} />

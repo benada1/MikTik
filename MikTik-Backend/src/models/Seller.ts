@@ -19,8 +19,13 @@ const sellerSchema = new mongoose.Schema(
     },
 
     // Profile
-    bio: { type: String, default: '', trim: true },
+    bio: { type: String, default: '', trim: true, maxlength: 160 },
+    description: { type: String, default: '', trim: true, maxlength: 1000 },
     location: { type: String, default: '', trim: true },
+    socialLinks: {
+      instagram: { type: String, default: '', trim: true },
+      twitter: { type: String, default: '', trim: true },
+    },
 
     // ID verification
     verification: {

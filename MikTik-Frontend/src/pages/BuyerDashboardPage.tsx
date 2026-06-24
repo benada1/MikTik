@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Ticket, ShieldCheck, CheckCircle, Clock, XCircle, Download, ArrowRight, MapPin, Calendar, Star } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useNotifications } from '../context/NotificationContext';
+import Pagination from '../components/Pagination';
 
 const API = 'http://localhost:5000/api';
 
@@ -54,9 +55,12 @@ export default function BuyerDashboardPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterMode>('all');
+  const [page, setPage] = useState(1);
   const [reviewState, setReviewState] = useState<ReviewState | null>(null);
   const { t } = useLanguage();
   const { notifications, markRead } = useNotifications();
+
+  const PAGE_SIZE = 10;
 
   const STATUS_CFG = {
     confirmed: { label: t('status.confirmed'), icon: CheckCircle, classes: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' },
@@ -87,6 +91,9 @@ export default function BuyerDashboardPage() {
     if (filter === 'upcoming') return !isExpired(p);
     return true;
   });
+
+  const totalPages = Math.ceil(filteredPurchases.length / PAGE_SIZE) || 1;
+  const pagedPurchases = filteredPurchases.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const totalSpent = purchases
     .filter(p => p.status !== 'cancelled')
@@ -190,7 +197,7 @@ export default function BuyerDashboardPage() {
           {(['all', 'upcoming', 'expired'] as FilterMode[]).map(mode => (
             <button
               key={mode}
-              onClick={() => setFilter(mode)}
+              onClick={() => { setFilter(mode); setPage(1); }}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
                 filter === mode
                   ? 'bg-indigo-600 dark:bg-indigo-500 text-white border-indigo-600 dark:border-indigo-500'
@@ -234,7 +241,7 @@ export default function BuyerDashboardPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredPurchases.map(order => {
+            {pagedPurchases.map(order => {
               const tk = order.ticket;
               const gradient = tk ? (CAT_GRADIENT[tk.category] || CAT_GRADIENT['Concert']) : CAT_GRADIENT['Concert'];
               const eventDate = tk?.date
@@ -312,6 +319,8 @@ export default function BuyerDashboardPage() {
             })}
           </div>
         )}
+
+        <Pagination page={page} pages={totalPages} onPageChange={setPage} />
       </div>
 
       {/* Review modal */}

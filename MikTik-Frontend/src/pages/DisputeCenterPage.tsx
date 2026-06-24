@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { AlertTriangle, ShieldCheck, Clock, CheckCircle, MessageSquare, Plus, X, User } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import Pagination from '../components/Pagination';
 
 const API = 'http://localhost:5000/api';
 
@@ -29,7 +30,10 @@ export default function DisputeCenterPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const [showNew, setShowNew] = useState(false);
+
+  const PAGE_SIZE = 10;
   const [selectedOrderId, setSelectedOrderId] = useState('');
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -133,6 +137,9 @@ export default function DisputeCenterPage() {
       !reports.some(r => r.orderId === orderNum && r.status !== 'closed')
     );
   });
+
+  const totalPages = Math.ceil(reports.length / PAGE_SIZE) || 1;
+  const pagedReports = reports.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="bg-white dark:bg-zinc-950 min-h-screen">
@@ -240,7 +247,7 @@ export default function DisputeCenterPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {reports.map(r => {
+            {pagedReports.map(r => {
               const cfg = STATUS_CFG[r.status];
               const StatusIcon = cfg.icon;
               const date = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -306,6 +313,8 @@ export default function DisputeCenterPage() {
             })}
           </div>
         )}
+
+        <Pagination page={page} pages={totalPages} onPageChange={setPage} />
       </div>
 
       {/* Thank-you modal */}

@@ -4,6 +4,7 @@ const Purchase = require('../models/Purchase');
 const Ticket = require('../models/Ticket');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
+const Seller = require('../models/Seller');
 const authMiddleware = require('../middleware/auth');
 
 async function sendPurchaseConfirmationEmail(buyerEmail: string, buyerName: string, ticketName: string, venue: string, qty: number, totalPaid: number, orderId: string) {
@@ -116,6 +117,12 @@ router.post('/', authMiddleware, async (req: any, res: any) => {
         link: '/seller-dashboard',
         relatedId: purchase._id,
       });
+
+      // Track total sales on seller profile
+      await Seller.findOneAndUpdate(
+        { user: ticket.seller },
+        { $inc: { totalSales: qty } }
+      );
     }
 
     res.status(201).json({ purchase });

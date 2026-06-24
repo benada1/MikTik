@@ -15,6 +15,7 @@ import SellTicketPage from './pages/SellTicketPage';
 import DisputeCenterPage from './pages/DisputeCenterPage';
 import AdminPanelPage from './pages/AdminPanelPage';
 import BecomeSellerPage from './pages/BecomeSellerPage';
+import SellerProfilePage from './pages/SellerProfilePage';
 import StaticPageView from './pages/StaticPageView';
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
                 <Route path="/seller-dashboard" element={<PrivateRoute><SellerDashboardPage /></PrivateRoute>} />
                 <Route path="/sell" element={<PrivateRoute minLevel={2}><SellTicketPage /></PrivateRoute>} />
                 <Route path="/become-seller" element={<PrivateRoute><BecomeSellerPage /></PrivateRoute>} />
+                <Route path="/seller/:userId" element={<SellerProfilePage />} />
                 <Route path="/dispute-center" element={<PrivateRoute><DisputeCenterPage /></PrivateRoute>} />
                 <Route path="/admin" element={<PrivateRoute minLevel={3}><AdminPanelPage /></PrivateRoute>} />
                 <Route path="/privacy-policy" element={<StaticPageView />} />

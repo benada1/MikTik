@@ -200,12 +200,24 @@ export default function TicketDetailsPage() {
             <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-white/5 p-6">
               <h2 className="font-semibold text-slate-900 dark:text-white mb-4">{t('ticketDetails.seller')}</h2>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-xl font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
+                <Link
+                  to={ticket.seller ? `/seller/${ticket.seller}` : '#'}
+                  className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-xl font-bold text-indigo-600 dark:text-indigo-400 shrink-0 hover:ring-2 hover:ring-indigo-400 transition-all"
+                >
                   {(ticket.sellerName || 'U')[0]}
-                </div>
+                </Link>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-slate-900 dark:text-white">{ticket.sellerName || t('ticketDetails.unknownSeller')}</span>
+                    {ticket.seller ? (
+                      <Link
+                        to={`/seller/${ticket.seller}`}
+                        className="font-semibold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                      >
+                        {ticket.sellerName || t('ticketDetails.unknownSeller')}
+                      </Link>
+                    ) : (
+                      <span className="font-semibold text-slate-900 dark:text-white">{ticket.sellerName || t('ticketDetails.unknownSeller')}</span>
+                    )}
                     <span className="flex items-center gap-1 text-xs bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.5 rounded-full">
                       <CheckCircle className="w-2.5 h-2.5" /> {t('ticketDetails.idVerified')}
                     </span>
@@ -220,6 +232,14 @@ export default function TicketDetailsPage() {
                     <span className="text-xs text-slate-400">({ticket.sellerReviews} {t('ticketDetails.reviews')})</span>
                     {ticket.sellerSince && <span className="text-xs text-slate-400 ml-1">· {t('ticketDetails.memberSince')} {ticket.sellerSince}</span>}
                   </div>
+                  {ticket.seller && (
+                    <Link
+                      to={`/seller/${ticket.seller}`}
+                      className="inline-block mt-2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                    >
+                      View seller profile →
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>

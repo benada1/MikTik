@@ -109,13 +109,26 @@ router.get('/my', authMiddleware, async (req: any, res: any) => {
   }
 });
 
-// GET /api/reports — admin: all reports except closed
+// GET /api/reports — admin: all reports except closed, paginated
 router.get('/', authMiddleware, requireAdmin, async (req: any, res: any) => {
   try {
-    const reports = await Report.find({ status: { $ne: 'closed' } })
-      .populate('user', 'name email')
-      .sort({ createdAt: -1 });
-    res.json({ reports });
+    const { page: pageParam } = req.query;
+    const limit = 15;
+    const page = Math.max(1, Number(pageParam) || 1);
+    const skip = (page - 1) * limit;
+
+    const query = { status: { $ne: 'closed' } };
+
+    const [reports, total] = await Promise.all([
+      Report.find(query)
+        .populate('user', 'name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Report.countDocuments(query),
+    ]);
+
+    res.json({ reports, total, pages: Math.ceil(total / limit) || 1, page });
   } catch {
     res.status(500).json({ error: 'Server error' });
   }

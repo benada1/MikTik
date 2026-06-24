@@ -5,6 +5,7 @@ import {
   MessageSquare, BarChart2,
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import Pagination from '../components/Pagination';
 
 const API = 'http://localhost:5000/api';
 
@@ -53,7 +54,15 @@ type Section = 'applications' | 'reports' | 'stats';
 export default function AdminPanelPage() {
   const [section, setSection] = useState<Section>('applications');
   const [applications, setApplications] = useState<SellerApp[]>([]);
+  const [appPages, setAppPages] = useState(1);
+  const [appPage, setAppPage] = useState(1);
+  const [appTotal, setAppTotal] = useState(0);
+  const [appsLoading, setAppsLoading] = useState(true);
   const [reports, setReports] = useState<Report[]>([]);
+  const [reportPages, setReportPages] = useState(1);
+  const [reportPage, setReportPage] = useState(1);
+  const [reportTotal, setReportTotal] = useState(0);
+  const [reportsLoading, setReportsLoading] = useState(true);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<AppFilter>('pending');
@@ -70,25 +79,48 @@ export default function AdminPanelPage() {
 
   const token = () => localStorage.getItem('tt_token');
 
-  useEffect(() => { fetchAll(); }, []);
-
-  const fetchAll = async () => {
-    setLoading(true);
-    try {
-      const [appsRes, reportsRes, statsRes] = await Promise.all([
-        fetch(`${API}/seller-applications`, { headers: { Authorization: `Bearer ${token()}` } }),
-        fetch(`${API}/reports`, { headers: { Authorization: `Bearer ${token()}` } }),
-        fetch(`${API}/admin/stats`, { headers: { Authorization: `Bearer ${token()}` } }),
-      ]);
-      const [appsData, reportsData, statsData] = await Promise.all([
-        appsRes.json(), reportsRes.json(), statsRes.json(),
-      ]);
-      setApplications(appsData.applications || []);
-      setReports(reportsData.reports || []);
-      if (!statsData.error) setStats(statsData);
-    } catch {}
-    finally { setLoading(false); }
+  const fetchStats = async () => {
+    const res = await fetch(`${API}/admin/stats`, { headers: { Authorization: `Bearer ${token()}` } });
+    const data = await res.json();
+    if (!data.error) setStats(data);
   };
+
+  const fetchApplications = async (pg: number, fil: AppFilter) => {
+    setAppsLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(pg) });
+      if (fil !== 'all') params.set('status', fil);
+      const res = await fetch(`${API}/seller-applications?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
+      const data = await res.json();
+      setApplications(data.applications || []);
+      setAppPages(data.pages ?? 1);
+      setAppTotal(data.total ?? 0);
+    } catch {} finally { setAppsLoading(false); }
+  };
+
+  const fetchReports = async (pg: number) => {
+    setReportsLoading(true);
+    try {
+      const res = await fetch(`${API}/reports?page=${pg}`, { headers: { Authorization: `Bearer ${token()}` } });
+      const data = await res.json();
+      setReports(data.reports || []);
+      setReportPages(data.pages ?? 1);
+      setReportTotal(data.total ?? 0);
+    } catch {} finally { setReportsLoading(false); }
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    fetchStats().finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchApplications(appPage, filter);
+  }, [filter, appPage]);
+
+  useEffect(() => {
+    fetchReports(reportPage);
+  }, [reportPage]);
 
   useEffect(() => {
     if (!selected || selected.status !== 'approved') {
@@ -104,7 +136,8 @@ export default function AdminPanelPage() {
     setActionLoading(true);
     try {
       await fetch(`${API}/seller-applications/${id}/approve`, { method: 'PATCH', headers: { Authorization: `Bearer ${token()}` } });
-      await fetchAll(); setSelected(null);
+      await Promise.all([fetchApplications(appPage, filter), fetchStats()]);
+      setSelected(null);
     } finally { setActionLoading(false); }
   };
 
@@ -116,7 +149,8 @@ export default function AdminPanelPage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
         body: JSON.stringify({ reason: rejectReason }),
       });
-      await fetchAll(); setSelected(null);
+      await Promise.all([fetchApplications(appPage, filter), fetchStats()]);
+      setSelected(null);
     } finally { setActionLoading(false); }
   };
 
@@ -128,7 +162,8 @@ export default function AdminPanelPage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
         body: JSON.stringify({ reason: rejectReason }),
       });
-      await fetchAll(); setSelected(null);
+      await Promise.all([fetchApplications(appPage, filter), fetchStats()]);
+      setSelected(null);
     } finally { setActionLoading(false); }
   };
 
@@ -156,17 +191,9 @@ export default function AdminPanelPage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
         body: JSON.stringify({ status, adminNote: reportNote }),
       });
-      await fetchAll(); setSelectedReport(null); setReportNote('');
+      await Promise.all([fetchReports(reportPage), fetchStats()]);
+      setSelectedReport(null); setReportNote('');
     } finally { setReportActionLoading(false); }
-  };
-
-  const filtered = applications.filter(a => filter === 'all' || a.status === filter);
-  const counts: Record<AppFilter, number> = {
-    all: applications.length,
-    pending: applications.filter(a => a.status === 'pending').length,
-    approved: applications.filter(a => a.status === 'approved').length,
-    rejected: applications.filter(a => a.status === 'rejected').length,
-    revoked: applications.filter(a => a.status === 'revoked').length,
   };
 
   const statusStyle = (s: SellerApp['status']) =>
@@ -220,7 +247,7 @@ export default function AdminPanelPage() {
         <div className="flex gap-1 bg-slate-100 dark:bg-zinc-900 rounded-xl p-1 mb-6 w-fit">
           {([
             { key: 'applications' as const, label: 'Seller Applications', icon: Store, badge: undefined as number | undefined },
-            { key: 'reports' as const, label: 'Reports', icon: MessageSquare, badge: reports.filter(r => r.status !== 'closed').length },
+            { key: 'reports' as const, label: 'Reports', icon: MessageSquare, badge: reportTotal > 0 ? reportTotal : undefined },
           ]).map(({ key, label, icon: Icon, badge }) => (
             <button
               key={key}
@@ -249,7 +276,7 @@ export default function AdminPanelPage() {
               {(['pending', 'approved', 'rejected', 'revoked', 'all'] as AppFilter[]).map(f => (
                 <button
                   key={f}
-                  onClick={() => setFilter(f)}
+                  onClick={() => { setFilter(f); setAppPage(1); }}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
                     filter === f
                       ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm'
@@ -257,7 +284,7 @@ export default function AdminPanelPage() {
                   }`}
                 >
                   {t(`admin.${f}`)}
-                  {counts[f] > 0 && (
+                  {filter === f && appTotal > 0 && (
                     <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
                       f === 'pending' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' :
                       f === 'approved' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' :
@@ -265,24 +292,24 @@ export default function AdminPanelPage() {
                       f === 'revoked' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' :
                       'bg-slate-200 dark:bg-zinc-700 text-slate-600 dark:text-slate-400'
                     }`}>
-                      {counts[f]}
+                      {appTotal}
                     </span>
                   )}
                 </button>
               ))}
             </div>
 
-            {loading ? (
+            {appsLoading ? (
               <div className="flex items-center justify-center py-20">
                 <div className="w-7 h-7 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
               </div>
-            ) : filtered.length === 0 ? (
+            ) : applications.length === 0 ? (
               <div className="text-center py-20 text-slate-400 dark:text-slate-500 text-sm">
                 {t('admin.no')} {filter === 'all' ? '' : t(`admin.${filter}`)} {t('admin.noApplications')}
               </div>
             ) : (
               <div className="space-y-2">
-                {filtered.map(app => (
+                {applications.map(app => (
                   <button
                     key={app._id}
                     onClick={() => { setSelected(app); setRejectReason(''); }}
@@ -303,13 +330,15 @@ export default function AdminPanelPage() {
                 ))}
               </div>
             )}
+
+            <Pagination page={appPage} pages={appPages} onPageChange={setAppPage} />
           </>
         )}
 
         {/* ── Reports section ── */}
         {section === 'reports' && (
           <>
-            {loading ? (
+            {reportsLoading ? (
               <div className="flex items-center justify-center py-20">
                 <div className="w-7 h-7 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
               </div>
@@ -338,6 +367,8 @@ export default function AdminPanelPage() {
                 ))}
               </div>
             )}
+
+            <Pagination page={reportPage} pages={reportPages} onPageChange={setReportPage} />
           </>
         )}
       </div>

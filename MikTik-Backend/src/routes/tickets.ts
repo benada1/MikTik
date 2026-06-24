@@ -35,7 +35,7 @@ const upload = multer({
 // GET /api/tickets
 router.get('/', async (req: any, res: any) => {
   try {
-    const { category, city, maxPrice, verified, sort, search, limit } = req.query;
+    const { category, city, maxPrice, verified, sort, search, limit: limitParam, page: pageParam } = req.query;
 
     const query: any = { status: 'active', date: { $gte: new Date() } };
 
@@ -47,6 +47,7 @@ router.get('/', async (req: any, res: any) => {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
         { venue: { $regex: search, $options: 'i' } },
+        { city: { $regex: search, $options: 'i' } },
       ];
     }
 
@@ -55,11 +56,16 @@ router.get('/', async (req: any, res: any) => {
     if (sort === 'price-desc') sortObj = { price: -1 };
     if (sort === 'popular') sortObj = { views: -1 };
 
-    let q = Ticket.find(query).sort(sortObj);
-    if (limit) q = q.limit(Number(limit));
+    const limit = Math.min(Number(limitParam) || 12, 100);
+    const page = Math.max(1, Number(pageParam) || 1);
+    const skip = (page - 1) * limit;
 
-    const tickets = await q;
-    res.json({ tickets });
+    const [tickets, total] = await Promise.all([
+      Ticket.find(query).sort(sortObj).skip(skip).limit(limit),
+      Ticket.countDocuments(query),
+    ]);
+
+    res.json({ tickets, total, pages: Math.ceil(total / limit) || 1, page });
   } catch (err: any) {
     console.error('Get tickets error:', err);
     res.status(500).json({ error: 'Server error' });
