@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, KeyRound, CheckCircle, Ticket, Eye, EyeOff } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -15,6 +15,8 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+
+  useEffect(() => { document.title = 'Reset Password | MikTik'; }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,44 +90,49 @@ export default function ResetPasswordPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+                <label htmlFor="reset-password" className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
                   {t('resetPassword.newPasswordLabel')}
                 </label>
                 <div className="relative">
                   <input
+                    id="reset-password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder={t('resetPassword.minChars')}
                     required
+                    autoComplete="new-password"
                     className="w-full px-4 py-3 pr-11 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(p => !p)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+                <label htmlFor="reset-confirm" className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
                   {t('resetPassword.confirmLabel')}
                 </label>
                 <input
+                  id="reset-confirm"
                   type={showPassword ? 'text' : 'password'}
                   value={confirm}
                   onChange={e => setConfirm(e.target.value)}
                   placeholder={t('resetPassword.repeatPassword')}
                   required
+                  autoComplete="new-password"
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                 />
               </div>
 
               {error && (
-                <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+                <p role="alert" className="text-sm text-red-500 dark:text-red-400">{error}</p>
               )}
 
               <button

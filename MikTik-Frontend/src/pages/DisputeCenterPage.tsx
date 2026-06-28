@@ -27,6 +27,8 @@ interface Report {
 }
 
 export default function DisputeCenterPage() {
+  useEffect(() => { document.title = 'Dispute Center | MikTik'; }, []);
+
   const [reports, setReports] = useState<Report[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -154,16 +156,18 @@ export default function DisputeCenterPage() {
           {!isAdmin && (
             <button
               onClick={openForm}
+              aria-expanded={showNew}
+              aria-controls="new-dispute-form"
               className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-sm font-semibold rounded-xl transition-colors"
             >
-              <Plus className="w-4 h-4" /> {t('dispute.newDispute')}
+              <Plus className="w-4 h-4" aria-hidden="true" /> {t('dispute.newDispute')}
             </button>
           )}
         </div>
 
         {/* Guarantee notice */}
         <div className="flex items-start gap-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-4 mb-6">
-          <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+          <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" aria-hidden="true" />
           <div>
             <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-300 mb-0.5">{t('dispute.protectionTitle')}</p>
             <p className="text-xs text-indigo-700 dark:text-indigo-400 leading-relaxed">{t('dispute.protectionDesc')}</p>
@@ -172,28 +176,30 @@ export default function DisputeCenterPage() {
 
         {/* New dispute form */}
         {showNew && !isAdmin && (
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-5 mb-6">
+          <div id="new-dispute-form" className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-5 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-slate-900 dark:text-white text-sm">{t('dispute.openNewTitle')}</h2>
               <button
                 onClick={() => setShowNew(false)}
+                aria-label="Close"
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
-            {formError && <p className="text-xs text-red-500 mb-3">{formError}</p>}
+            {formError && <p role="alert" className="text-xs text-red-500 mb-3">{formError}</p>}
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+                <label htmlFor="dispute-order" className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
                   {t('dispute.orderId')}
                 </label>
                 {ordersWithoutOpenReport.length === 0 ? (
-                  <p className="text-sm text-slate-400 dark:text-slate-500 py-2">
+                  <p className="text-sm text-slate-600 dark:text-slate-400 py-2">
                     No eligible orders found. Reports must be submitted within 30 minutes of the event start time.
                   </p>
                 ) : (
                   <select
+                    id="dispute-order"
                     value={selectedOrderId}
                     onChange={e => setSelectedOrderId(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
@@ -214,10 +220,11 @@ export default function DisputeCenterPage() {
                 )}
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+                <label htmlFor="dispute-reason" className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
                   {t('dispute.reason')}
                 </label>
                 <textarea
+                  id="dispute-reason"
                   value={reason}
                   onChange={e => setReason(e.target.value)}
                   rows={3}
@@ -238,12 +245,12 @@ export default function DisputeCenterPage() {
 
         {/* Reports list */}
         {loading ? (
-          <div className="text-center py-16 text-slate-400 dark:text-slate-500 text-sm">Loading…</div>
+          <div className="text-center py-16 text-slate-600 dark:text-slate-400 text-sm">Loading…</div>
         ) : reports.length === 0 ? (
           <div className="text-center py-16">
             <ShieldCheck className="w-10 h-10 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
             <p className="text-slate-500 dark:text-slate-400 font-medium">{t('dispute.noDisputes')}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{t('dispute.noDisputesSub')}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{t('dispute.noDisputesSub')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -258,15 +265,15 @@ export default function DisputeCenterPage() {
                       <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
                         {r.eventName || r.orderId}
                       </h3>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{t('dispute.opened')} {date}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{t('dispute.opened')} {date}</p>
                       {isAdmin && r.user && (
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1">
-                          <User className="w-3 h-3" /> {r.user.name} · {r.user.email}
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 flex items-center gap-1">
+                          <User className="w-3 h-3" aria-hidden="true" /> {r.user.name} · {r.user.email}
                         </p>
                       )}
                     </div>
                     <span className={`shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.classes}`}>
-                      <StatusIcon className="w-3 h-3" />{cfg.label}
+                      <StatusIcon className="w-3 h-3" aria-hidden="true" />{cfg.label}
                     </span>
                   </div>
                   <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-3">{r.reason}</p>
@@ -274,7 +281,7 @@ export default function DisputeCenterPage() {
                     <p className="text-xs text-indigo-600 dark:text-indigo-400 mb-3 italic">Admin note: {r.adminNote}</p>
                   )}
                   <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/5">
-                    <span className="text-xs text-slate-400 dark:text-slate-500">{t('dispute.order')} {r.orderId}</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-400">{t('dispute.order')} {r.orderId}</span>
                     {isAdmin ? (
                       <div className="flex items-center gap-2">
                         {r.status !== 'pending' && (
@@ -303,7 +310,7 @@ export default function DisputeCenterPage() {
                     ) : (
                       r.status === 'open' && (
                         <button className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors">
-                          <MessageSquare className="w-3.5 h-3.5" /> {t('dispute.messageSupport')}
+                          <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" /> {t('dispute.messageSupport')}
                         </button>
                       )
                     )}
@@ -319,12 +326,12 @@ export default function DisputeCenterPage() {
 
       {/* Thank-you modal */}
       {showThankYou && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+        <div role="dialog" aria-modal="true" aria-labelledby="thankyou-dialog-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
             <div className="flex items-center justify-center w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 rounded-full mx-auto mb-4">
-              <CheckCircle className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+              <CheckCircle className="w-7 h-7 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
             </div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2" dir="rtl">
+            <h2 id="thankyou-dialog-title" className="text-lg font-bold text-slate-900 dark:text-white mb-2" dir="rtl">
               תודה על פנייתך
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" dir="rtl">

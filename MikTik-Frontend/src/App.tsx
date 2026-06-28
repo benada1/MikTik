@@ -17,6 +17,7 @@ import AdminPanelPage from './pages/AdminPanelPage';
 import BecomeSellerPage from './pages/BecomeSellerPage';
 import SellerProfilePage from './pages/SellerProfilePage';
 import StaticPageView from './pages/StaticPageView';
+import AccessibilityStatementPage from './pages/AccessibilityStatementPage';
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
                 <Route path="/admin" element={<PrivateRoute minLevel={3}><AdminPanelPage /></PrivateRoute>} />
                 <Route path="/privacy-policy" element={<StaticPageView />} />
                 <Route path="/terms-of-service" element={<StaticPageView />} />
+                <Route path="/accessibility" element={<AccessibilityStatementPage />} />
               </Routes>
             </Layout>
           }

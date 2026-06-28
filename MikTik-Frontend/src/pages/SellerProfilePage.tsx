@@ -81,6 +81,10 @@ export default function SellerProfilePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  useEffect(() => {
+    document.title = profile ? `${profile.name} | MikTik` : 'Seller Profile | MikTik';
+  }, [profile]);
+
   const [reviewRating, setReviewRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
@@ -199,7 +203,7 @@ export default function SellerProfilePage() {
               {profile.description && (
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 leading-relaxed whitespace-pre-wrap">{profile.description}</p>
               )}
-              <div className="flex items-center gap-4 flex-wrap text-xs text-slate-400 dark:text-slate-500">
+              <div className="flex items-center gap-4 flex-wrap text-xs text-slate-600 dark:text-slate-400">
                 {profile.location && (
                   <span className="flex items-center gap-1.5">
                     <MapPin className="w-3 h-3" /> {profile.location}
@@ -239,7 +243,7 @@ export default function SellerProfilePage() {
                 <Users className="w-4 h-4 text-indigo-400" />
               </div>
               <div className="text-2xl font-bold text-slate-900 dark:text-white">{profile.totalSales}</div>
-              <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Total Sales</div>
+              <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Total Sales</div>
             </div>
 
             <div className="text-center">
@@ -251,15 +255,15 @@ export default function SellerProfilePage() {
                   <div className="text-2xl font-bold text-slate-900 dark:text-white">
                     {(profile.rating ?? 0).toFixed(1)}
                   </div>
-                  <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Avg. Rating</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Avg. Rating</div>
                 </>
               ) : (
                 <>
                   <div className="flex justify-center mb-1">
                     <Star className="w-4 h-4 text-slate-300 dark:text-slate-600" />
                   </div>
-                  <div className="text-sm font-semibold text-slate-400 dark:text-slate-500 mt-1">New Seller</div>
-                  <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                  <div className="text-sm font-semibold text-slate-600 dark:text-slate-400 mt-1">New Seller</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                     {reviewsRemaining > 0 ? `${reviewsRemaining} review${reviewsRemaining !== 1 ? 's' : ''} to unlock` : 'Rating coming soon'}
                   </div>
                 </>
@@ -271,7 +275,7 @@ export default function SellerProfilePage() {
                 <MessageSquare className="w-4 h-4 text-indigo-400" />
               </div>
               <div className="text-2xl font-bold text-slate-900 dark:text-white">{profile.totalReviews}</div>
-              <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Reviews</div>
+              <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Reviews</div>
             </div>
           </div>
         </div>
@@ -291,7 +295,7 @@ export default function SellerProfilePage() {
 
             {profile.eligiblePurchases.length > 1 ? (
               <div className="mb-4">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Select purchase to review</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">Select purchase to review</label>
                 <select
                   value={selectedPurchaseId}
                   onChange={e => setSelectedPurchaseId(e.target.value)}
@@ -303,13 +307,13 @@ export default function SellerProfilePage() {
                 </select>
               </div>
             ) : eligiblePurchase ? (
-              <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
+              <p className="text-xs text-slate-600 dark:text-slate-400 mb-4">
                 Reviewing your purchase of &ldquo;{eligiblePurchase.ticketName}&rdquo;
               </p>
             ) : null}
 
             <div className="mb-4">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Your Rating</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">Your Rating</label>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map(i => (
                   <button
@@ -332,7 +336,7 @@ export default function SellerProfilePage() {
             </div>
 
             <div className="mb-4">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Comment <span className="font-normal normal-case">(optional)</span></label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">Comment <span className="font-normal normal-case">(optional)</span></label>
               <textarea
                 value={reviewComment}
                 onChange={e => setReviewComment(e.target.value)}
@@ -371,12 +375,12 @@ export default function SellerProfilePage() {
               <Ticket className="w-4 h-4 text-indigo-400" />
               Active Listings
               {profile.activeListings.length > 0 && (
-                <span className="text-slate-400 dark:text-slate-500 font-normal text-sm">({profile.activeListings.length})</span>
+                <span className="text-slate-600 dark:text-slate-400 font-normal text-sm">({profile.activeListings.length})</span>
               )}
             </h2>
 
             {profile.activeListings.length === 0 ? (
-              <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-white/5 p-8 text-center text-sm text-slate-400 dark:text-slate-500">
+              <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-white/5 p-8 text-center text-sm text-slate-600 dark:text-slate-400">
                 No active listings right now
               </div>
             ) : (
@@ -399,13 +403,13 @@ export default function SellerProfilePage() {
                         <p className="font-semibold text-slate-900 dark:text-white text-sm truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                           {listing.name}
                         </p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
                           {listing.venue}, {listing.city}{dateLabel ? ` · ${dateLabel}` : ''}
                         </p>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="font-bold text-slate-900 dark:text-white text-sm">₪{listing.price}</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">{listing.available} left</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">{listing.available} left</p>
                       </div>
                     </Link>
                   );
@@ -420,12 +424,12 @@ export default function SellerProfilePage() {
               <Star className="w-4 h-4 text-amber-400" />
               Reviews
               {profile.totalReviews > 0 && (
-                <span className="text-slate-400 dark:text-slate-500 font-normal text-sm">({profile.totalReviews})</span>
+                <span className="text-slate-600 dark:text-slate-400 font-normal text-sm">({profile.totalReviews})</span>
               )}
             </h2>
 
             {profile.reviews.length === 0 ? (
-              <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-white/5 p-8 text-center text-sm text-slate-400 dark:text-slate-500">
+              <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-white/5 p-8 text-center text-sm text-slate-600 dark:text-slate-400">
                 No reviews yet
               </div>
             ) : (

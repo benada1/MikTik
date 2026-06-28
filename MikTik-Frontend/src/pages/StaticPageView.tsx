@@ -29,6 +29,10 @@ export default function StaticPageView() {
   const pageTitle = slug ? (SLUG_TITLES[slug]?.[lang] ?? slug) : '';
 
   useEffect(() => {
+    document.title = pageTitle ? `${pageTitle} | MikTik` : 'MikTik';
+  }, [pageTitle]);
+
+  useEffect(() => {
     if (!slug) return;
     setLoading(true);
     setEditing(false);
@@ -96,7 +100,7 @@ export default function StaticPageView() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{pageTitle}</h1>
             {updatedAt && (
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                 {t('staticPage.lastUpdated')}: {new Date(updatedAt).toLocaleDateString()}
               </p>
             )}

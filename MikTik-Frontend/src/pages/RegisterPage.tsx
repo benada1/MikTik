@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ShieldCheck, Ticket, Sun, Moon, AlertCircle, CheckCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
@@ -27,6 +27,8 @@ export default function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
   const { t } = useLanguage();
+
+  useEffect(() => { document.title = 'Create Account | MikTik'; }, []);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(f => ({ ...f, [k]: e.target.value }));
@@ -112,8 +114,8 @@ export default function RegisterPage() {
             <span className="font-bold text-slate-900 dark:text-white text-[17px]">MikTik</span>
           </Link>
           <div className="lg:ml-auto flex items-center gap-3">
-            <button onClick={toggle} className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
-              {theme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+            <button onClick={toggle} aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+              {theme === 'dark' ? <Sun className="w-4.5 h-4.5" aria-hidden="true" /> : <Moon className="w-4.5 h-4.5" aria-hidden="true" />}
             </button>
             <span className="text-sm text-slate-500 dark:text-slate-400">{t('register.haveAccount')}</span>
             <Link to="/login" className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors">
@@ -128,43 +130,51 @@ export default function RegisterPage() {
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">{t('register.freeForever')}</p>
 
             {error && (
-              <div className="flex items-start gap-2.5 mb-5 px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/50 rounded-xl text-sm text-red-700 dark:text-red-400">
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <div role="alert" className="flex items-start gap-2.5 mb-5 px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/50 rounded-xl text-sm text-red-700 dark:text-red-400">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
                 <span>{error}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               {/* Name */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('register.fullName')}</label>
+                <label htmlFor="register-name" className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{t('register.fullName')}</label>
                 <input
+                  id="register-name"
                   type="text"
                   value={form.name}
                   onChange={set('name')}
                   placeholder="Yossi Cohen"
+                  autoComplete="name"
+                  aria-invalid={!!fieldErrors.name}
+                  aria-describedby={fieldErrors.name ? 'register-name-error' : undefined}
                   className={`w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${fieldErrors.name ? 'border-red-400 dark:border-red-600' : 'border-slate-200 dark:border-white/10'}`}
                 />
                 {fieldErrors.name && (
-                  <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />{fieldErrors.name}
+                  <p id="register-name-error" role="alert" className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" aria-hidden="true" />{fieldErrors.name}
                   </p>
                 )}
               </div>
 
               {/* Email */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('register.emailLabel')}</label>
+                <label htmlFor="register-email" className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{t('register.emailLabel')}</label>
                 <input
+                  id="register-email"
                   type="email"
                   value={form.email}
                   onChange={set('email')}
                   placeholder="you@example.com"
+                  autoComplete="email"
+                  aria-invalid={!!fieldErrors.email}
+                  aria-describedby={fieldErrors.email ? 'register-email-error' : undefined}
                   className={`w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${fieldErrors.email ? 'border-red-400 dark:border-red-600' : 'border-slate-200 dark:border-white/10'}`}
                 />
                 {fieldErrors.email && (
-                  <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1.5">
-                    <AlertCircle className="w-3 h-3 shrink-0" />
+                  <p id="register-email-error" role="alert" className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                    <AlertCircle className="w-3 h-3 shrink-0" aria-hidden="true" />
                     <span>
                       {fieldErrors.email.includes('sign in') ? (
                         <>
@@ -180,28 +190,32 @@ export default function RegisterPage() {
 
               {/* Password */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('register.passwordLabel')}</label>
+                <label htmlFor="register-password" className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{t('register.passwordLabel')}</label>
                 <div className="relative">
                   <input
+                    id="register-password"
                     type={showPass ? 'text' : 'password'}
                     value={form.password}
                     onChange={set('password')}
                     placeholder={t('register.passwordMin')}
+                    autoComplete="new-password"
+                    aria-invalid={!!fieldErrors.password}
+                    aria-describedby={fieldErrors.password ? 'register-password-error' : strengthData ? 'register-password-strength' : undefined}
                     className={`w-full px-4 pr-10 py-3 bg-slate-50 dark:bg-zinc-900 border rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${fieldErrors.password ? 'border-red-400 dark:border-red-600' : 'border-slate-200 dark:border-white/10'}`}
                   />
-                  <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-                    {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  <button type="button" onClick={() => setShowPass(!showPass)} aria-label={showPass ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                    {showPass ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                   </button>
                 </div>
                 {fieldErrors.password ? (
-                  <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{fieldErrors.password}</p>
+                  <p id="register-password-error" role="alert" className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1"><AlertCircle className="w-3 h-3" aria-hidden="true" />{fieldErrors.password}</p>
                 ) : strengthData && (
-                  <div className="mt-2 space-y-1">
-                    <div className="h-1 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                  <div id="register-password-strength" className="mt-2 space-y-1" aria-live="polite">
+                    <div className="h-1 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden" aria-hidden="true">
                       <div className={`h-full rounded-full transition-all ${strengthData.color} ${strengthData.width}`} />
                     </div>
                     <div className="flex items-center gap-1">
-                      {strengthData.key === 'password.strong' && <CheckCircle className="w-3 h-3 text-green-500" />}
+                      {strengthData.key === 'password.strong' && <CheckCircle className="w-3 h-3 text-green-500" aria-hidden="true" />}
                       <span className="text-xs text-slate-400">{t(strengthData.key)}</span>
                     </div>
                   </div>
@@ -210,20 +224,24 @@ export default function RegisterPage() {
 
               {/* Confirm password */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('register.confirmPassword')}</label>
+                <label htmlFor="register-confirm" className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{t('register.confirmPassword')}</label>
                 <input
+                  id="register-confirm"
                   type="password"
                   value={form.confirm}
                   onChange={set('confirm')}
                   placeholder="••••••••"
+                  autoComplete="new-password"
+                  aria-invalid={!!fieldErrors.confirm}
+                  aria-describedby={fieldErrors.confirm ? 'register-confirm-error' : undefined}
                   className={`w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${fieldErrors.confirm ? 'border-red-400 dark:border-red-600' : 'border-slate-200 dark:border-white/10'}`}
                 />
                 {fieldErrors.confirm && (
-                  <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{fieldErrors.confirm}</p>
+                  <p id="register-confirm-error" role="alert" className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1"><AlertCircle className="w-3 h-3" aria-hidden="true" />{fieldErrors.confirm}</p>
                 )}
               </div>
 
-              <p className="text-xs text-slate-400 dark:text-slate-500">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 {t('register.termsPrefix')}{' '}
                 <a href="#" className="text-indigo-600 dark:text-indigo-400 hover:underline">{t('register.termsOfService')}</a>
                 {' '}{t('register.and')}{' '}

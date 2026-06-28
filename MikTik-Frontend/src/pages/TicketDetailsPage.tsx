@@ -58,6 +58,10 @@ export default function TicketDetailsPage() {
   const [bought, setBought] = useState(false);
 
   useEffect(() => {
+    document.title = ticket ? `${ticket.name} | MikTik` : 'Ticket | MikTik';
+  }, [ticket]);
+
+  useEffect(() => {
     if (!id) return;
     setLoading(true);
     setNotFound(false);
@@ -109,7 +113,7 @@ export default function TicketDetailsPage() {
     return (
       <div className="bg-white dark:bg-zinc-950 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse space-y-4">
+          <div role="status" aria-label="Loading ticket details" className="animate-pulse space-y-4">
             <div className="h-56 bg-slate-200 dark:bg-zinc-800 rounded-2xl" />
             <div className="h-40 bg-slate-200 dark:bg-zinc-800 rounded-2xl" />
           </div>
@@ -223,12 +227,12 @@ export default function TicketDetailsPage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 mt-1">
-                    <div className="flex">
+                    <div aria-label={`Rating: ${ticket.sellerRating} out of 5 stars`} className="flex">
                       {[1, 2, 3, 4, 5].map(i => (
-                        <Star key={i} className={`w-3 h-3 ${i <= Math.round(ticket.sellerRating) ? 'fill-amber-400 text-amber-400' : 'text-slate-200 dark:text-slate-700'}`} />
+                        <Star key={i} className={`w-3 h-3 ${i <= Math.round(ticket.sellerRating) ? 'fill-amber-400 text-amber-400' : 'text-slate-200 dark:text-slate-700'}`} aria-hidden="true" />
                       ))}
                     </div>
-                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{ticket.sellerRating}</span>
+                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300" aria-hidden="true">{ticket.sellerRating}</span>
                     <span className="text-xs text-slate-400">({ticket.sellerReviews} {t('ticketDetails.reviews')})</span>
                     {ticket.sellerSince && <span className="text-xs text-slate-400 ml-1">· {t('ticketDetails.memberSince')} {ticket.sellerSince}</span>}
                   </div>
@@ -247,7 +251,7 @@ export default function TicketDetailsPage() {
             {/* Guarantee */}
             <div className="bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-3">
-                <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
                 <h3 className="font-semibold text-indigo-900 dark:text-indigo-300 text-sm">{t('ticketDetails.guarantee')}</h3>
               </div>
               <ul className="space-y-2">
@@ -257,7 +261,7 @@ export default function TicketDetailsPage() {
                   t('ticketDetails.guarantee3'),
                 ].map(item => (
                   <li key={item} className="flex items-start gap-2 text-sm text-indigo-700 dark:text-indigo-300">
-                    <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
                     {item}
                   </li>
                 ))}
@@ -282,7 +286,7 @@ export default function TicketDetailsPage() {
                   </div>
                   {ticket.files && ticket.files.length > 0 && (
                     <div className="mb-5 space-y-2">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('ticketDetails.ticketFiles')}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{t('ticketDetails.ticketFiles')}</p>
                       {ticket.files.map((f, i) => {
                         const url = `http://localhost:5000${f}`;
                         const isImage = /\.(png|jpg|jpeg)$/i.test(f);
@@ -322,7 +326,7 @@ export default function TicketDetailsPage() {
                       </>
                     )}
                   </div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mb-5">{t('ticketDetails.perTicket')}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mb-5">{t('ticketDetails.perTicket')}</p>
 
                   {ticket.bundleOnly && ticket.available > 1 ? (
                     <div className="mb-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/40 px-4 py-3 flex items-start gap-2">
@@ -334,8 +338,9 @@ export default function TicketDetailsPage() {
                     </div>
                   ) : (
                     <div className="mb-4">
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('ticketDetails.quantity')}</label>
+                      <label htmlFor="ticket-qty" className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{t('ticketDetails.quantity')}</label>
                       <select
+                        id="ticket-qty"
                         value={qty}
                         onChange={e => setQty(Number(e.target.value))}
                         className="w-full px-4 py-2.5 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -364,15 +369,15 @@ export default function TicketDetailsPage() {
                   </div>
 
                   {buyError && (
-                    <p className="text-xs text-red-600 dark:text-red-400 mb-3 text-center">{buyError}</p>
+                    <p role="alert" className="text-xs text-red-600 dark:text-red-400 mb-3 text-center">{buyError}</p>
                   )}
 
                   {isOwnTicket ? (
-                    <div className="w-full py-3 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-slate-500 text-sm text-center font-semibold">
+                    <div className="w-full py-3 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-400 text-sm text-center font-semibold">
                       {t('ticketDetails.ownListing')}
                     </div>
                   ) : ticket.available === 0 ? (
-                    <div className="w-full py-3 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-slate-500 text-sm text-center font-semibold">
+                    <div className="w-full py-3 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-400 text-sm text-center font-semibold">
                       {t('ticketDetails.soldOut')}
                     </div>
                   ) : (
@@ -386,7 +391,7 @@ export default function TicketDetailsPage() {
                   )}
 
                   {!isOwnTicket && ticket.available > 0 && (
-                    <div className="flex items-center justify-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center justify-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                       <Lock className="w-3 h-3" />
                       {t('ticketDetails.encrypted')}
                     </div>

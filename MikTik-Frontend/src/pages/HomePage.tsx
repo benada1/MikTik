@@ -96,6 +96,8 @@ export default function HomePage() {
   const { t } = useLanguage();
   const [featuredTickets, setFeaturedTickets] = useState<FeaturedTicket[]>([]);
 
+  useEffect(() => { document.title = 'MikTik – Buy & Sell Event Tickets Safely'; }, []);
+
   useEffect(() => {
     fetch(`${API}/tickets?sort=popular&limit=4`)
       .then((r) => r.json())
@@ -323,7 +325,7 @@ export default function HomePage() {
               </div>
 
               <div className="p-3.5">
-                <div className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 mb-2.5">
+                <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400 mb-2.5">
                   <MapPin className="w-3 h-3 shrink-0" />
                   <span className="truncate">
                     {e.city} · {e.venue}
@@ -345,7 +347,7 @@ export default function HomePage() {
                       ₪{e.price}
                     </span>
                   </div>
-                  <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                  <span className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
                     <Eye className="w-3 h-3" />
                     {e.views}
                   </span>

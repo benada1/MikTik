@@ -37,6 +37,8 @@ interface Listing {
 }
 
 export default function SellerDashboardPage() {
+  useEffect(() => { document.title = 'Seller Dashboard | MikTik'; }, []);
+
   const { user } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -217,12 +219,12 @@ export default function SellerDashboardPage() {
                     {profile.bio ? (
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">{profile.bio}</p>
                     ) : (
-                      <p className="text-sm text-slate-400 dark:text-slate-500 mb-1 italic">No bio added yet</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-1 italic">No bio added yet</p>
                     )}
                     {profile.description && (
                       <p className="text-sm text-slate-500 dark:text-slate-400 mb-2 leading-relaxed line-clamp-2">{profile.description}</p>
                     )}
-                    <div className="flex items-center gap-3 flex-wrap text-xs text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-3 flex-wrap text-xs text-slate-600 dark:text-slate-400">
                       {profile.location && (
                         <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{profile.location}</span>
                       )}
@@ -258,7 +260,7 @@ export default function SellerDashboardPage() {
                 <div className="flex items-center gap-5 mt-4 pt-4 border-t border-slate-100 dark:border-white/5 text-sm">
                   <div className="text-center">
                     <div className="font-bold text-slate-900 dark:text-white">{profile.totalSales}</div>
-                    <div className="text-xs text-slate-400 dark:text-slate-500">Sales</div>
+                    <div className="text-xs text-slate-600 dark:text-slate-400">Sales</div>
                   </div>
                   <div className="w-px h-6 bg-slate-200 dark:bg-white/10" />
                   {profile.ratingVisible ? (
@@ -272,7 +274,7 @@ export default function SellerDashboardPage() {
                       <span className="text-xs text-slate-400">({profile.totalReviews} review{profile.totalReviews !== 1 ? 's' : ''})</span>
                     </div>
                   ) : (
-                    <div className="text-xs text-slate-400 dark:text-slate-500">
+                    <div className="text-xs text-slate-600 dark:text-slate-400">
                       Rating unlocks after 5 reviews ({profile.totalReviews}/5)
                     </div>
                   )}
@@ -294,7 +296,7 @@ export default function SellerDashboardPage() {
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
                       Short Bio <span className="font-normal normal-case text-slate-300 dark:text-slate-600">— tagline shown at the top of your profile ({editBio.length}/160)</span>
                     </label>
                     <input
@@ -306,7 +308,7 @@ export default function SellerDashboardPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
                       Description <span className="font-normal normal-case text-slate-300 dark:text-slate-600">— tell buyers about yourself ({editDescription.length}/1000)</span>
                     </label>
                     <textarea
@@ -319,7 +321,7 @@ export default function SellerDashboardPage() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">Location</label>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">Location</label>
                       <input
                         type="text"
                         value={editLocation}
@@ -329,7 +331,7 @@ export default function SellerDashboardPage() {
                       />
                     </div>
                     <div>
-                      <label className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+                      <label className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
                         <AtSign className="w-3 h-3" /> Instagram
                       </label>
                       <div className="relative">
@@ -344,7 +346,7 @@ export default function SellerDashboardPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+                      <label className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
                         <AtSign className="w-3 h-3" /> X / Twitter
                       </label>
                       <div className="relative">
@@ -477,10 +479,10 @@ export default function SellerDashboardPage() {
                         </span>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                        <span className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
                           <Calendar className="w-3 h-3" />{eventDate}
                         </span>
-                        <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                        <span className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
                           <MapPin className="w-3 h-3" />{l.city} · {l.venue}
                         </span>
                       </div>

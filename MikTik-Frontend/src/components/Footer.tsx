@@ -14,6 +14,7 @@ export default function Footer() {
     ] : []),
     { label: t('footer.privacy'), to: '/privacy-policy' },
     { label: t('footer.terms'), to: '/terms-of-service' },
+    { label: t('footer.accessibility'), to: '/accessibility' },
   ];
 
   const isSeller = user && user.permissionLevel >= 2;
@@ -36,14 +37,14 @@ export default function Footer() {
   };
 
   return (
-    <footer className="border-t border-slate-200 dark:border-white/5 bg-white dark:bg-zinc-950">
+    <footer aria-label="Site footer" className="border-t border-slate-200 dark:border-white/5 bg-white dark:bg-zinc-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
-                <Ticket className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center" aria-hidden="true">
+                <Ticket className="w-4 h-4 text-white" aria-hidden="true" />
               </div>
               <span className="text-[17px] font-bold text-slate-900 dark:text-white">
                 Mik<span className="text-indigo-600 dark:text-indigo-400">Tik</span>
@@ -53,15 +54,15 @@ export default function Footer() {
               {t('footer.tagline')}
             </p>
             <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-              <ShieldCheck className="w-3.5 h-3.5" />
+              <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{t('footer.escrow')}</span>
             </div>
           </div>
 
           {/* Link columns */}
           {Object.entries(LINKS).map(([title, items]) => (
-            <div key={title}>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">{title}</h4>
+            <nav key={title} aria-labelledby={`footer-${title}`}>
+              <h2 id={`footer-${title}`} className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-3">{title}</h2>
               <ul className="space-y-2">
                 {items.map(item => (
                   <li key={item.label}>
@@ -74,13 +75,13 @@ export default function Footer() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </nav>
           ))}
         </div>
 
         <div className="mt-10 pt-6 border-t border-slate-100 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-slate-400 dark:text-slate-500">{t('footer.copyright')}</p>
-          <p className="text-xs text-slate-400 dark:text-slate-500">{t('footer.licensed')}</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">{t('footer.copyright')}</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">{t('footer.licensed')}</p>
         </div>
       </div>
     </footer>

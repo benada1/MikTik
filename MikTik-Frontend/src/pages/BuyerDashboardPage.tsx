@@ -52,6 +52,8 @@ interface ReviewState {
 }
 
 export default function BuyerDashboardPage() {
+  useEffect(() => { document.title = 'My Tickets | MikTik'; }, []);
+
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterMode>('all');
@@ -269,18 +271,18 @@ export default function BuyerDashboardPage() {
                           </h3>
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                             {tk?.city && (
-                              <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                              <span className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
                                 <MapPin className="w-3 h-3" />{tk.city} · {tk.venue}
                               </span>
                             )}
                             {eventDate && (
-                              <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                              <span className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
                                 <Calendar className="w-3 h-3" />{eventDate}
                               </span>
                             )}
                           </div>
                           {(tk?.section || tk?.row) && (
-                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                               {tk.section}{tk.row ? ` · ${t('buyer.row')} ${tk.row}` : ''}
                             </p>
                           )}

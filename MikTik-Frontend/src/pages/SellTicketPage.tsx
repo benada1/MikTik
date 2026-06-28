@@ -36,7 +36,7 @@ const ISRAELI_VENUES = [
 ];
 
 const inputClass = "w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors";
-const labelClass = "block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2";
+const labelClass = "block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2";
 
 interface SelectedFile {
   file: File;
@@ -55,7 +55,8 @@ function formatBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function Combobox({ value, onChange, options, placeholder }: {
+function Combobox({ id, value, onChange, options, placeholder }: {
+  id: string;
   value: string;
   onChange: (v: string) => void;
   options: string[];
@@ -63,6 +64,8 @@ function Combobox({ value, onChange, options, placeholder }: {
 }) {
   const [inputVal, setInputVal] = useState(value);
   const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const listId = `${id}-listbox`;
 
   useEffect(() => { setInputVal(value); }, [value]);
 
@@ -74,6 +77,7 @@ function Combobox({ value, onChange, options, placeholder }: {
     setInputVal(opt);
     onChange(opt);
     setOpen(false);
+    setActiveIndex(-1);
   };
 
   const handleBlur = () => {
@@ -84,28 +88,54 @@ function Combobox({ value, onChange, options, placeholder }: {
       onChange('');
     }
     setOpen(false);
+    setActiveIndex(-1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!open) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { setOpen(true); setActiveIndex(0); e.preventDefault(); }
+      return;
+    }
+    if (e.key === 'ArrowDown') { setActiveIndex(i => Math.min(i + 1, filtered.length - 1)); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { setActiveIndex(i => Math.max(i - 1, 0)); e.preventDefault(); }
+    else if (e.key === 'Enter' && activeIndex >= 0) { select(filtered[activeIndex]); e.preventDefault(); }
+    else if (e.key === 'Escape') { setOpen(false); setActiveIndex(-1); e.preventDefault(); }
   };
 
   return (
     <div className="relative">
       <input
+        id={id}
         type="text"
+        role="combobox"
+        aria-expanded={open}
+        aria-autocomplete="list"
+        aria-controls={listId}
+        aria-activedescendant={activeIndex >= 0 ? `${listId}-opt-${activeIndex}` : undefined}
         value={inputVal}
-        onChange={e => { setInputVal(e.target.value); onChange(''); setOpen(true); }}
+        onChange={e => { setInputVal(e.target.value); onChange(''); setOpen(true); setActiveIndex(-1); }}
         onFocus={() => setOpen(true)}
         onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
         placeholder={placeholder}
         autoComplete="off"
         className={inputClass}
       />
       {open && filtered.length > 0 && (
-        <ul className="absolute z-50 mt-1 w-full max-h-48 overflow-auto bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-lg text-sm">
-          {filtered.map(opt => (
+        <ul
+          id={listId}
+          role="listbox"
+          className="absolute z-50 mt-1 w-full max-h-48 overflow-auto bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-lg text-sm"
+        >
+          {filtered.map((opt, i) => (
             <li
               key={opt}
+              id={`${listId}-opt-${i}`}
+              role="option"
+              aria-selected={opt === value}
               onMouseDown={e => e.preventDefault()}
               onClick={() => select(opt)}
-              className="px-4 py-2 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-slate-900 dark:text-slate-100"
+              className={`px-4 py-2 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-slate-900 dark:text-slate-100${i === activeIndex ? ' bg-indigo-50 dark:bg-indigo-900/30' : ''}`}
             >
               {opt}
             </li>
@@ -117,6 +147,8 @@ function Combobox({ value, onChange, options, placeholder }: {
 }
 
 export default function SellTicketPage() {
+  useEffect(() => { document.title = 'Sell a Ticket | MikTik'; }, []);
+
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
@@ -296,7 +328,7 @@ export default function SellTicketPage() {
       <div className="bg-white dark:bg-zinc-950 min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
           <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-5">
-            <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+            <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('sell.successTitle')}</h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
@@ -336,7 +368,7 @@ export default function SellTicketPage() {
 
         {/* Escrow notice */}
         <div className="flex items-start gap-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-4 mb-8">
-          <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+          <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" aria-hidden="true" />
           <div>
             <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-300 mb-1">{t('sell.protectionTitle')}</p>
             <p className="text-xs text-indigo-700 dark:text-indigo-400 leading-relaxed">
@@ -346,7 +378,7 @@ export default function SellTicketPage() {
         </div>
 
         {error && (
-          <div ref={errorRef} className="mb-6 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
+          <div ref={errorRef} role="alert" className="mb-6 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
             {error}
           </div>
         )}
@@ -358,20 +390,21 @@ export default function SellTicketPage() {
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-5">{t('sell.eventInfo')}</h2>
             <div className="space-y-4">
               <div>
-                <label className={labelClass}>{t('sell.eventName')}</label>
-                <input type="text" value={form.event} onChange={set('event')} placeholder={t('sell.eventNamePlaceholder')} required className={inputClass} />
+                <label htmlFor="sell-event" className={labelClass}>{t('sell.eventName')}</label>
+                <input id="sell-event" type="text" value={form.event} onChange={set('event')} placeholder={t('sell.eventNamePlaceholder')} required className={inputClass} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>{t('sell.category')}</label>
-                  <select value={form.category} onChange={set('category')} required className={inputClass}>
+                  <label htmlFor="sell-category" className={labelClass}>{t('sell.category')}</label>
+                  <select id="sell-category" value={form.category} onChange={set('category')} required className={inputClass}>
                     <option value="">{t('sell.selectCategory')}</option>
                     {CATEGORIES.map(c => <option key={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className={labelClass}>{t('sell.eventDate')}</label>
+                  <label htmlFor="sell-date" className={labelClass}>{t('sell.eventDate')}</label>
                   <input
+                    id="sell-date"
                     type="date"
                     value={form.date}
                     onChange={set('date')}
@@ -383,8 +416,9 @@ export default function SellTicketPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>{t('sell.eventTime')}</label>
+                  <label htmlFor="sell-time" className={labelClass}>{t('sell.eventTime')}</label>
                   <input
+                    id="sell-time"
                     type="time"
                     value={form.startTime}
                     onChange={set('startTime')}
@@ -395,24 +429,26 @@ export default function SellTicketPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>{t('sell.venue')}</label>
+                  <label htmlFor="sell-venue" className={labelClass}>{t('sell.venue')}</label>
                   <Combobox
+                    id="sell-venue"
                     value={form.venue}
                     onChange={v => setForm(f => ({ ...f, venue: v }))}
                     options={ISRAELI_VENUES}
                     placeholder={t('sell.venuePlaceholder')}
                   />
-                  <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{t('sell.venueHint')}</p>
+                  <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400">{t('sell.venueHint')}</p>
                 </div>
                 <div>
-                  <label className={labelClass}>{t('sell.city')}</label>
+                  <label htmlFor="sell-city" className={labelClass}>{t('sell.city')}</label>
                   <Combobox
+                    id="sell-city"
                     value={form.city}
                     onChange={v => setForm(f => ({ ...f, city: v }))}
                     options={ISRAELI_CITIES}
                     placeholder={t('sell.cityPlaceholder')}
                   />
-                  <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{t('sell.cityHint')}</p>
+                  <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400">{t('sell.cityHint')}</p>
                 </div>
               </div>
             </div>
@@ -423,14 +459,14 @@ export default function SellTicketPage() {
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-5">{t('sell.ticketDetails')}</h2>
             <div className="space-y-4">
               <div>
-                <label className={labelClass}>{t('sell.qty')}</label>
-                <select value={form.qty} onChange={set('qty')} className={inputClass}>
+                <label htmlFor="sell-qty" className={labelClass}>{t('sell.qty')}</label>
+                <select id="sell-qty" value={form.qty} onChange={set('qty')} className={inputClass}>
                   {[1, 2, 3, 4, 5, 6, 7, 8].map(n => <option key={n}>{n}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className={labelClass}>{t('sell.seatDetailsLabel')}</label>
+                <p className={labelClass}>{t('sell.seatDetailsLabel')}</p>
                 <div className="space-y-3">
                   {seatDetails.map((sd, i) => {
                     const isDuplicate = duplicateSeatIndices.has(i);
@@ -450,8 +486,9 @@ export default function SellTicketPage() {
                       )}
                       <div className="grid grid-cols-3 gap-3">
                         <div>
-                          <label className={labelClass}>{t('sell.section')}</label>
+                          <label htmlFor={`sell-section-${i}`} className={labelClass}>{t('sell.section')}</label>
                           <input
+                            id={`sell-section-${i}`}
                             type="text"
                             value={sd.section}
                             onChange={e => setSeat(i, 'section', e.target.value)}
@@ -461,8 +498,9 @@ export default function SellTicketPage() {
                           />
                         </div>
                         <div>
-                          <label className={labelClass}>{t('sell.row')}</label>
+                          <label htmlFor={`sell-row-${i}`} className={labelClass}>{t('sell.row')}</label>
                           <input
+                            id={`sell-row-${i}`}
                             type="text"
                             value={sd.row}
                             onChange={e => setSeat(i, 'row', e.target.value)}
@@ -472,8 +510,9 @@ export default function SellTicketPage() {
                           />
                         </div>
                         <div>
-                          <label className={labelClass}>{t('sell.seat')}</label>
+                          <label htmlFor={`sell-seat-${i}`} className={labelClass}>{t('sell.seat')}</label>
                           <input
+                            id={`sell-seat-${i}`}
                             type="text"
                             value={sd.seat}
                             onChange={e => setSeat(i, 'seat', e.target.value)}
@@ -490,16 +529,16 @@ export default function SellTicketPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>{t('sell.askingPrice')}</label>
-                  <input type="number" value={form.price} onChange={set('price')} placeholder="250" min="1" required className={inputClass} />
-                  <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                    <Info className="w-3 h-3" /> {t('sell.serviceFee').replace('{rate}', String(commissionRate))}
+                  <label htmlFor="sell-price" className={labelClass}>{t('sell.askingPrice')}</label>
+                  <input id="sell-price" type="number" value={form.price} onChange={set('price')} placeholder="250" min="1" required className={inputClass} />
+                  <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                    <Info className="w-3 h-3" aria-hidden="true" /> {t('sell.serviceFee').replace('{rate}', String(commissionRate))}
                   </p>
                 </div>
                 <div>
-                  <label className={labelClass}>{t('sell.faceValue')}</label>
-                  <input type="number" value={form.originalPrice} onChange={set('originalPrice')} placeholder="300" min="1" className={inputClass} />
-                  <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{t('sell.discountBadge')}</p>
+                  <label htmlFor="sell-original-price" className={labelClass}>{t('sell.faceValue')}</label>
+                  <input id="sell-original-price" type="number" value={form.originalPrice} onChange={set('originalPrice')} placeholder="300" min="1" className={inputClass} />
+                  <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400">{t('sell.discountBadge')}</p>
                 </div>
               </div>
 
@@ -521,8 +560,9 @@ export default function SellTicketPage() {
               )}
 
               <div>
-                <label className={labelClass}>{t('sell.description')}</label>
+                <label htmlFor="sell-description" className={labelClass}>{t('sell.description')}</label>
                 <textarea
+                  id="sell-description"
                   value={form.description}
                   onChange={set('description')}
                   rows={3}
@@ -535,7 +575,7 @@ export default function SellTicketPage() {
               {Number(form.qty) > 1 && (
                 <div className="flex items-center justify-between py-3 px-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/40 rounded-xl">
                   <div className="flex items-center gap-2.5">
-                    <Users className="w-4 h-4 text-indigo-500" />
+                    <Users className="w-4 h-4 text-indigo-500" aria-hidden="true" />
                     <div>
                       <p className="text-sm font-semibold text-slate-900 dark:text-white">{t('sell.bundleOnly')}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">{t('sell.bundleOnlyDesc')}</p>
@@ -543,10 +583,13 @@ export default function SellTicketPage() {
                   </div>
                   <button
                     type="button"
+                    role="switch"
+                    aria-checked={form.bundleOnly}
+                    aria-label={t('sell.bundleOnly')}
                     onClick={() => setForm(f => ({ ...f, bundleOnly: !f.bundleOnly }))}
                     className={`relative w-10 h-6 rounded-full transition-colors shrink-0 ${form.bundleOnly ? 'bg-indigo-500' : 'bg-slate-200 dark:bg-zinc-700'}`}
                   >
-                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${form.bundleOnly ? 'left-5' : 'left-1'}`} />
+                    <span aria-hidden="true" className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${form.bundleOnly ? 'left-5' : 'left-1'}`} />
                   </button>
                 </div>
               )}
@@ -557,23 +600,27 @@ export default function SellTicketPage() {
           {/* File upload */}
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-6">
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm mb-1">{t('sell.ticketFiles')}</h2>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mb-4">
               {t('sell.filesDesc')}
             </p>
 
             {/* Drop zone */}
             <div
+              role="button"
+              tabIndex={0}
+              aria-label={t('sell.dropFiles')}
               onDragOver={e => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
               onDrop={onDrop}
               onClick={() => fileInputRef.current?.click()}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); } }}
               className={`flex flex-col items-center justify-center gap-2 h-28 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
                 dragging
                   ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40'
                   : 'border-slate-200 dark:border-white/10 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30'
               }`}
             >
-              <Upload className="w-6 h-6 text-slate-400" />
+              <Upload className="w-6 h-6 text-slate-400" aria-hidden="true" />
               <span className="text-sm text-slate-500 dark:text-slate-400">
                 {t('sell.dropFiles')} <span className="text-indigo-600 dark:text-indigo-400 font-medium">{t('sell.clickUpload')}</span>
               </span>
@@ -604,8 +651,8 @@ export default function SellTicketPage() {
                     ) : (
                       <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg flex items-center justify-center shrink-0">
                         {file.type === 'application/pdf'
-                          ? <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                          : <Image className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                          ? <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+                          : <Image className="w-5 h-5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
                         }
                       </div>
                     )}
@@ -615,10 +662,11 @@ export default function SellTicketPage() {
                     </div>
                     <button
                       type="button"
+                      aria-label={`Remove ${file.name}`}
                       onClick={() => removeFile(i)}
                       className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-4 h-4" aria-hidden="true" />
                     </button>
                   </li>
                 ))}

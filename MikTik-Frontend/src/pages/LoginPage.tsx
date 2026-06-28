@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, ShieldCheck, Ticket, AlertCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
@@ -18,6 +18,8 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
+
+  useEffect(() => { document.title = 'Sign In | MikTik'; }, []);
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -75,7 +77,7 @@ export default function LoginPage() {
           <div className="space-y-3">
             {[t('login.feature1'), t('login.feature2'), t('login.feature3')].map(f => (
               <div key={f} className="flex items-center gap-2.5 text-white/90 text-sm">
-                <ShieldCheck className="w-4 h-4 text-indigo-200" />
+                <ShieldCheck className="w-4 h-4 text-indigo-200" aria-hidden="true" />
                 {f}
               </div>
             ))}
@@ -95,8 +97,8 @@ export default function LoginPage() {
             <span className="font-bold text-slate-900 dark:text-white text-[17px]">MikTik</span>
           </Link>
           <div className="lg:ml-auto flex items-center gap-3">
-            <button onClick={toggle} className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
-              {theme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+            <button onClick={toggle} aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+              {theme === 'dark' ? <Sun className="w-4.5 h-4.5" aria-hidden="true" /> : <Moon className="w-4.5 h-4.5" aria-hidden="true" />}
             </button>
             <span className="text-sm text-slate-500 dark:text-slate-400">{t('login.noAccount')}</span>
             <Link to="/register" className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
@@ -112,47 +114,52 @@ export default function LoginPage() {
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">{t('login.signInAccount')}</p>
 
             {error && (
-              <div className="flex items-start gap-2.5 mb-5 px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/50 rounded-xl text-sm text-red-700 dark:text-red-400">
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <div role="alert" className="flex items-start gap-2.5 mb-5 px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/50 rounded-xl text-sm text-red-700 dark:text-red-400">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
                 <span>{error}</span>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('login.emailLabel')}</label>
+                <label htmlFor="login-email" className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{t('login.emailLabel')}</label>
                 <input
+                  id="login-email"
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
+                  autoComplete="email"
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{t('login.passwordLabel')}</label>
+                  <label htmlFor="login-password" className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">{t('login.passwordLabel')}</label>
                   <Link to="/forgot-password" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
                     {t('login.forgotPassword')}
                   </Link>
                 </div>
                 <div className="relative">
                   <input
+                    id="login-password"
                     type={showPass ? 'text' : 'password'}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
+                    autoComplete="current-password"
                     className="w-full px-4 pr-10 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPass(!showPass)}
+                    aria-label={showPass ? 'Hide password' : 'Show password'}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                   >
-                    {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPass ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                   </button>
                 </div>
               </div>
@@ -168,7 +175,7 @@ export default function LoginPage() {
 
             <div className="flex items-center gap-3 my-5">
               <div className="flex-1 h-px bg-slate-200 dark:bg-white/10" />
-              <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{t('login.or')}</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">{t('login.or')}</span>
               <div className="flex-1 h-px bg-slate-200 dark:bg-white/10" />
             </div>
 

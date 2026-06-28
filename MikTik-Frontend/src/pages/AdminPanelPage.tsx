@@ -52,6 +52,8 @@ type AppFilter = 'pending' | 'approved' | 'rejected' | 'revoked' | 'all';
 type Section = 'applications' | 'reports' | 'stats';
 
 export default function AdminPanelPage() {
+  useEffect(() => { document.title = 'Admin Panel | MikTik'; }, []);
+
   const [section, setSection] = useState<Section>('applications');
   const [applications, setApplications] = useState<SellerApp[]>([]);
   const [appPages, setAppPages] = useState(1);
@@ -131,6 +133,15 @@ export default function AdminPanelPage() {
       .then(data => { if (typeof data.commissionRate === 'number') { setSellerCommission(data.commissionRate); setCommissionInput(String(data.commissionRate)); } })
       .catch(() => {});
   }, [selected]);
+
+  useEffect(() => {
+    if (!selected && !selectedReport) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setSelected(null); setSelectedReport(null); }
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [selected, selectedReport]);
 
   const handleApprove = async (id: string) => {
     setActionLoading(true);
@@ -214,7 +225,7 @@ export default function AdminPanelPage() {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-1">
-            <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('admin.title')}</h1>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">{t('admin.subtitle')}</p>
@@ -234,7 +245,7 @@ export default function AdminPanelPage() {
             ].map(({ icon: Icon, label, value, color, bg }) => (
               <div key={label} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl p-4">
                 <div className={`w-8 h-8 ${bg} rounded-lg flex items-center justify-center mb-2`}>
-                  <Icon className={`w-4 h-4 ${color}`} />
+                  <Icon className={`w-4 h-4 ${color}`} aria-hidden="true" />
                 </div>
                 <div className="text-xl font-bold text-slate-900 dark:text-white">{value}</div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{label}</div>
@@ -244,13 +255,15 @@ export default function AdminPanelPage() {
         )}
 
         {/* Section switcher */}
-        <div className="flex gap-1 bg-slate-100 dark:bg-zinc-900 rounded-xl p-1 mb-6 w-fit">
+        <div role="tablist" aria-label="Admin sections" className="flex gap-1 bg-slate-100 dark:bg-zinc-900 rounded-xl p-1 mb-6 w-fit">
           {([
             { key: 'applications' as const, label: 'Seller Applications', icon: Store, badge: undefined as number | undefined },
             { key: 'reports' as const, label: 'Reports', icon: MessageSquare, badge: reportTotal > 0 ? reportTotal : undefined },
           ]).map(({ key, label, icon: Icon, badge }) => (
             <button
               key={key}
+              role="tab"
+              aria-selected={section === key}
               onClick={() => setSection(key)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
                 section === key
@@ -258,7 +271,7 @@ export default function AdminPanelPage() {
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="w-3.5 h-3.5" aria-hidden="true" />
               {label}
               {badge !== undefined && badge > 0 && (
                 <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
@@ -272,10 +285,12 @@ export default function AdminPanelPage() {
         {/* ── Seller Applications section ── */}
         {section === 'applications' && (
           <>
-            <div className="flex gap-1 bg-slate-100 dark:bg-zinc-900 rounded-xl p-1 mb-6 w-fit flex-wrap">
+            <div role="tablist" aria-label="Application status filter" className="flex gap-1 bg-slate-100 dark:bg-zinc-900 rounded-xl p-1 mb-6 w-fit flex-wrap">
               {(['pending', 'approved', 'rejected', 'revoked', 'all'] as AppFilter[]).map(f => (
                 <button
                   key={f}
+                  role="tab"
+                  aria-selected={filter === f}
                   onClick={() => { setFilter(f); setAppPage(1); }}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
                     filter === f
@@ -300,11 +315,11 @@ export default function AdminPanelPage() {
             </div>
 
             {appsLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="w-7 h-7 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+              <div role="status" aria-label="Loading applications" className="flex items-center justify-center py-20">
+                <div className="w-7 h-7 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
               </div>
             ) : applications.length === 0 ? (
-              <div className="text-center py-20 text-slate-400 dark:text-slate-500 text-sm">
+              <div className="text-center py-20 text-slate-600 dark:text-slate-400 text-sm">
                 {t('admin.no')} {filter === 'all' ? '' : t(`admin.${filter}`)} {t('admin.noApplications')}
               </div>
             ) : (
@@ -320,12 +335,12 @@ export default function AdminPanelPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-slate-900 dark:text-white">{app.fullName || app.user.name}</p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500">{app.user.email} · {new Date(app.createdAt).toLocaleDateString()}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">{app.user.email} · {new Date(app.createdAt).toLocaleDateString()}</p>
                     </div>
                     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${statusStyle(app.status)}`}>
                       {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
                     </span>
-                    <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0" aria-hidden="true" />
                   </button>
                 ))}
               </div>
@@ -339,11 +354,11 @@ export default function AdminPanelPage() {
         {section === 'reports' && (
           <>
             {reportsLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="w-7 h-7 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+              <div role="status" aria-label="Loading reports" className="flex items-center justify-center py-20">
+                <div className="w-7 h-7 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
               </div>
             ) : reports.length === 0 ? (
-              <div className="text-center py-20 text-slate-400 dark:text-slate-500 text-sm">No open reports.</div>
+              <div className="text-center py-20 text-slate-600 dark:text-slate-400 text-sm">No open reports.</div>
             ) : (
               <div className="space-y-2">
                 {reports.map(r => (
@@ -353,16 +368,16 @@ export default function AdminPanelPage() {
                     className="w-full text-left bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-4 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors flex items-center gap-4"
                   >
                     <div className="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-500/20 flex items-center justify-center shrink-0">
-                      <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                      <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" aria-hidden="true" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-slate-900 dark:text-white">{r.eventName || r.orderId}</p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500">{r.user?.email} · {r.orderId} · {new Date(r.createdAt).toLocaleDateString()}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">{r.user?.email} · {r.orderId} · {new Date(r.createdAt).toLocaleDateString()}</p>
                     </div>
                     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${reportStatusStyle(r.status)}`}>
                       {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
                     </span>
-                    <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0" aria-hidden="true" />
                   </button>
                 ))}
               </div>
@@ -375,16 +390,16 @@ export default function AdminPanelPage() {
 
       {/* ── Seller application modal ── */}
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelected(null)} />
+        <div role="dialog" aria-modal="true" aria-labelledby="seller-app-dialog-title" className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" onClick={() => setSelected(null)} />
           <div className="relative w-full max-w-lg max-h-[90vh] bg-white dark:bg-zinc-950 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-y-auto">
             <div className="sticky top-0 z-10 bg-white dark:bg-zinc-950 border-b border-slate-100 dark:border-white/5 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <div className="flex items-center gap-2">
-                <Store className="w-4 h-4 text-indigo-500" />
-                <h2 className="font-semibold text-slate-900 dark:text-white text-sm">{t('admin.applicationDetails')}</h2>
+                <Store className="w-4 h-4 text-indigo-500" aria-hidden="true" />
+                <h2 id="seller-app-dialog-title" className="font-semibold text-slate-900 dark:text-white text-sm">{t('admin.applicationDetails')}</h2>
               </div>
-              <button onClick={() => setSelected(null)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
-                <X className="w-4 h-4" />
+              <button onClick={() => setSelected(null)} aria-label="Close" className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
@@ -393,44 +408,44 @@ export default function AdminPanelPage() {
                 <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${statusStyle(selected.status)}`}>
                   {t(`admin.${selected.status}`)}
                 </span>
-                <span className="text-xs text-slate-400 dark:text-slate-500">
+                <span className="text-xs text-slate-600 dark:text-slate-400">
                   {t('admin.submitted')} {new Date(selected.createdAt).toLocaleDateString()}
                 </span>
               </div>
 
               <div className="space-y-3">
-                <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('admin.personal')}</p>
+                <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{t('admin.personal')}</p>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                  <div><p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.accountName')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.user.name}</p></div>
-                  <div><p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.email')}</p><p className="font-medium text-slate-900 dark:text-white break-all">{selected.user.email}</p></div>
-                  <div><p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.fullLegalName')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.fullName || '—'}</p></div>
-                  <div><p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.phone')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.phone || '—'}</p></div>
-                  <div><p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.idPassport')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.idNumber || '—'}</p></div>
-                  <div><p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.dateOfBirth')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.dateOfBirth ? new Date(selected.dateOfBirth).toLocaleDateString() : '—'}</p></div>
+                  <div><p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">{t('admin.accountName')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.user.name}</p></div>
+                  <div><p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">{t('admin.email')}</p><p className="font-medium text-slate-900 dark:text-white break-all">{selected.user.email}</p></div>
+                  <div><p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">{t('admin.fullLegalName')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.fullName || '—'}</p></div>
+                  <div><p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">{t('admin.phone')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.phone || '—'}</p></div>
+                  <div><p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">{t('admin.idPassport')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.idNumber || '—'}</p></div>
+                  <div><p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">{t('admin.dateOfBirth')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.dateOfBirth ? new Date(selected.dateOfBirth).toLocaleDateString() : '—'}</p></div>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('admin.address')}</p>
+                <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{t('admin.address')}</p>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                   {selected.address?.street && (
-                    <div className="col-span-2"><p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.street')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.address.street}</p></div>
+                    <div className="col-span-2"><p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">{t('admin.street')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.address.street}</p></div>
                   )}
-                  <div><p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.city')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.address?.city || '—'}</p></div>
-                  <div><p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{t('admin.country')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.address?.country || '—'}</p></div>
+                  <div><p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">{t('admin.city')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.address?.city || '—'}</p></div>
+                  <div><p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">{t('admin.country')}</p><p className="font-medium text-slate-900 dark:text-white">{selected.address?.country || '—'}</p></div>
                 </div>
               </div>
 
               {selected.bio && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('admin.bio')}</p>
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{t('admin.bio')}</p>
                   <p className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-zinc-900 rounded-xl px-4 py-3 leading-relaxed">{selected.bio}</p>
                 </div>
               )}
 
               {selected.idImageUrl && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('admin.idDocument')}</p>
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{t('admin.idDocument')}</p>
                   <a
                     href={`http://localhost:5000${selected.idImageUrl}`}
                     target="_blank"
@@ -452,15 +467,16 @@ export default function AdminPanelPage() {
               {selected.status === 'pending' && (
                 <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-white/5">
                   <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder={t('admin.rejectReasonPlaceholder')} rows={2}
+                    aria-label={t('admin.rejectReasonPlaceholder')}
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none placeholder:text-slate-400 dark:placeholder:text-slate-600" />
                   <div className="flex gap-2">
                     <button onClick={() => handleApprove(selected._id)} disabled={actionLoading}
                       className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl text-sm font-semibold hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors disabled:opacity-60">
-                      <CheckCircle className="w-4 h-4" /> {t('admin.approve')}
+                      <CheckCircle className="w-4 h-4" aria-hidden="true" /> {t('admin.approve')}
                     </button>
                     <button onClick={() => handleReject(selected._id)} disabled={actionLoading}
                       className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl text-sm font-semibold hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-60">
-                      <XCircle className="w-4 h-4" /> {t('admin.reject')}
+                      <XCircle className="w-4 h-4" aria-hidden="true" /> {t('admin.reject')}
                     </button>
                   </div>
                 </div>
@@ -470,7 +486,7 @@ export default function AdminPanelPage() {
                 <div className="pt-4 border-t border-slate-100 dark:border-white/5">
                   <button onClick={() => handleApprove(selected._id)} disabled={actionLoading}
                     className="w-full flex items-center justify-center gap-1.5 py-3 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl text-sm font-semibold hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors disabled:opacity-60">
-                    <CheckCircle className="w-4 h-4" /> {t('admin.restoreSeller')}
+                    <CheckCircle className="w-4 h-4" aria-hidden="true" /> {t('admin.restoreSeller')}
                   </button>
                 </div>
               )}
@@ -478,13 +494,14 @@ export default function AdminPanelPage() {
               {selected.status === 'approved' && sellerCommission !== null && (
                 <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-white/5">
                   <div className="flex items-center gap-2 mb-1">
-                    <Percent className="w-3.5 h-3.5 text-indigo-500" />
-                    <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('admin.commissionRate')}</p>
+                    <Percent className="w-3.5 h-3.5 text-indigo-500" aria-hidden="true" />
+                    <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{t('admin.commissionRate')}</p>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">{t('admin.commissionDesc')}</p>
                   <div className="flex gap-2 items-center">
                     <div className="relative flex-1">
                       <input type="number" value={commissionInput} onChange={e => setCommissionInput(e.target.value)} min="0" max="100" step="0.5"
+                        aria-label={t('admin.commissionRate')}
                         className="w-full px-3 py-2.5 pr-8 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
                     </div>
@@ -493,17 +510,18 @@ export default function AdminPanelPage() {
                       {commissionLoading ? '...' : t('admin.saveCommission')}
                     </button>
                   </div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">{t('admin.currentCommission').replace('{rate}', String(sellerCommission))}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">{t('admin.currentCommission').replace('{rate}', String(sellerCommission))}</p>
                 </div>
               )}
 
               {selected.status === 'approved' && (
                 <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-white/5">
                   <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder={t('admin.revokeReasonPlaceholder')} rows={2}
+                    aria-label={t('admin.revokeReasonPlaceholder')}
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none placeholder:text-slate-400 dark:placeholder:text-slate-600" />
                   <button onClick={() => handleRevoke(selected._id)} disabled={actionLoading}
                     className="w-full flex items-center justify-center gap-1.5 py-3 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl text-sm font-semibold hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors disabled:opacity-60">
-                    <UserX className="w-4 h-4" /> {t('admin.revoke')}
+                    <UserX className="w-4 h-4" aria-hidden="true" /> {t('admin.revoke')}
                   </button>
                 </div>
               )}
@@ -514,16 +532,16 @@ export default function AdminPanelPage() {
 
       {/* ── Report modal ── */}
       {selectedReport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedReport(null)} />
+        <div role="dialog" aria-modal="true" aria-labelledby="report-dialog-title" className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" onClick={() => setSelectedReport(null)} />
           <div className="relative w-full max-w-lg max-h-[90vh] bg-white dark:bg-zinc-950 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-y-auto">
             <div className="sticky top-0 z-10 bg-white dark:bg-zinc-950 border-b border-slate-100 dark:border-white/5 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-red-500" />
-                <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Report Details</h2>
+                <AlertTriangle className="w-4 h-4 text-red-500" aria-hidden="true" />
+                <h2 id="report-dialog-title" className="font-semibold text-slate-900 dark:text-white text-sm">Report Details</h2>
               </div>
-              <button onClick={() => setSelectedReport(null)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
-                <X className="w-4 h-4" />
+              <button onClick={() => setSelectedReport(null)} aria-label="Close" className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
@@ -532,23 +550,23 @@ export default function AdminPanelPage() {
                 <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${reportStatusStyle(selectedReport.status)}`}>
                   {selectedReport.status.charAt(0).toUpperCase() + selectedReport.status.slice(1)}
                 </span>
-                <span className="text-xs text-slate-400 dark:text-slate-500">{new Date(selectedReport.createdAt).toLocaleDateString()}</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400">{new Date(selectedReport.createdAt).toLocaleDateString()}</span>
               </div>
 
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div><p className="text-xs text-slate-400 mb-0.5">Buyer</p><p className="font-medium text-slate-900 dark:text-white">{selectedReport.user?.name}</p><p className="text-xs text-slate-400">{selectedReport.user?.email}</p></div>
-                <div><p className="text-xs text-slate-400 mb-0.5">Order ID</p><p className="font-mono font-medium text-slate-900 dark:text-white">{selectedReport.orderId}</p></div>
-                {selectedReport.eventName && <div className="col-span-2"><p className="text-xs text-slate-400 mb-0.5">Event</p><p className="font-medium text-slate-900 dark:text-white">{selectedReport.eventName}</p></div>}
+                <div><p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">Buyer</p><p className="font-medium text-slate-900 dark:text-white">{selectedReport.user?.name}</p><p className="text-xs text-slate-600 dark:text-slate-400">{selectedReport.user?.email}</p></div>
+                <div><p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">Order ID</p><p className="font-mono font-medium text-slate-900 dark:text-white">{selectedReport.orderId}</p></div>
+                {selectedReport.eventName && <div className="col-span-2"><p className="text-xs text-slate-600 dark:text-slate-400 mb-0.5">Event</p><p className="font-medium text-slate-900 dark:text-white">{selectedReport.eventName}</p></div>}
               </div>
 
               <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Reason</p>
+                <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">Reason</p>
                 <p className="text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-zinc-900 rounded-xl px-4 py-3 leading-relaxed">{selectedReport.reason}</p>
               </div>
 
               {selectedReport.adminNote && (
                 <div>
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Admin Note</p>
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">Admin Note</p>
                   <p className="text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-zinc-900 rounded-xl px-4 py-3">{selectedReport.adminNote}</p>
                 </div>
               )}
@@ -558,6 +576,7 @@ export default function AdminPanelPage() {
                   value={reportNote}
                   onChange={e => setReportNote(e.target.value)}
                   placeholder="Add admin note (visible to buyer)..."
+                  aria-label="Add admin note"
                   rows={2}
                   className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none placeholder:text-slate-400"
                 />

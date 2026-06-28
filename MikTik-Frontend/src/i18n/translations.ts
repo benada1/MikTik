@@ -127,6 +127,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'footer.register': 'Register',
     'footer.privacy': 'Privacy Policy',
     'footer.terms': 'Terms of Service',
+    'footer.accessibility': 'Accessibility Statement',
 
     // Static pages (Privacy Policy, Terms of Service)
     'staticPage.edit': 'Edit',
@@ -615,6 +616,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'footer.register': 'הרשמה',
     'footer.privacy': 'מדיניות פרטיות',
     'footer.terms': 'תנאי שימוש',
+    'footer.accessibility': 'הצהרת נגישות',
 
     // Static pages (Privacy Policy, Terms of Service)
     'staticPage.edit': 'ערוך',

@@ -55,6 +55,8 @@ export default function MarketplacePage() {
     ? (CATEGORIES.find(c => c.toLowerCase() === urlCategory.toLowerCase()) ?? t('marketplace.catAll'))
     : t('marketplace.catAll');
 
+  useEffect(() => { document.title = 'Marketplace | MikTik'; }, []);
+
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -246,7 +248,7 @@ export default function MarketplacePage() {
 
                     {/* Card body */}
                     <div className="p-4">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 mb-3">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 mb-3">
                         <MapPin className="w-3 h-3 shrink-0" />
                         <span className="truncate">{tk.city} · {tk.venue}</span>
                         {tk.verified && (
@@ -267,13 +269,13 @@ export default function MarketplacePage() {
                           )}
                           <span className="text-lg font-bold text-slate-900 dark:text-white">₪{tk.price}</span>
                         </div>
-                        <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                        <span className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
                           <Eye className="w-3 h-3" />{tk.views}
                         </span>
                       </div>
 
                       {(tk.row || tk.available > 0) && (
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5">
                           {tk.row ? `${t('ticketDetails.row')} ${tk.row} · ` : ''}{tk.available} tickets · {tk.section}
                         </p>
                       )}
@@ -292,7 +294,7 @@ export default function MarketplacePage() {
               <div className="space-y-5">
                 {/* Category */}
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('marketplace.category')}</label>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{t('marketplace.category')}</label>
                   <select
                     value={category}
                     onChange={e => { setCategory(e.target.value); setPage(1); }}
@@ -304,7 +306,7 @@ export default function MarketplacePage() {
 
                 {/* City */}
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('marketplace.city')}</label>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{t('marketplace.city')}</label>
                   <select
                     value={city}
                     onChange={e => { setCity(e.target.value); setPage(1); }}
@@ -316,12 +318,12 @@ export default function MarketplacePage() {
 
                 {/* Price range */}
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-3">
                     {t('marketplace.priceRange')} (₪0 – ₪{maxPrice.toLocaleString()})
                   </label>
                   <input type="range" min={0} max={5000} step={50} value={maxPrice}
                     onChange={e => { setMaxPrice(Number(e.target.value)); setPage(1); }} className="w-full accent-indigo-500" />
-                  <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500 mt-1">
+                  <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 mt-1">
                     <span>₪0</span><span>₪5,000</span>
                   </div>
                 </div>

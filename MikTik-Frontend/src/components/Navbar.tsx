@@ -41,8 +41,15 @@ export default function Navbar() {
         setSettingsOpen(false);
       }
     }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") closeAll();
+    }
     document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   const isActive = (path: string) => location.pathname === path;
@@ -80,14 +87,14 @@ export default function Navbar() {
     }`;
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/90 backdrop-blur-md border-b border-slate-200/60 dark:border-white/6">
+    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/90 backdrop-blur-md border-b border-slate-200/60 dark:border-white/6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0" onClick={closeAll}>
-            <img src={logo} alt="MikTik" className="h-8 w-auto rounded-xl" />
-            <span className="text-[17px] font-bold tracking-tight text-slate-900 dark:text-white">
+            <img src={logo} alt="MikTik home" className="h-8 w-auto rounded-xl" />
+            <span className="text-[17px] font-bold tracking-tight text-slate-900 dark:text-white" aria-hidden="true">
               Mik<span className="text-indigo-600 dark:text-indigo-400">Tik</span>
             </span>
           </Link>
@@ -97,22 +104,23 @@ export default function Navbar() {
             {user?.permissionLevel === 3 && (
               <Link
                 to="/admin"
+                aria-current={isActive("/admin") ? "page" : undefined}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive("/admin")
                     ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400"
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
-                <ShieldCheck className="w-4 h-4" />
+                <ShieldCheck className="w-4 h-4" aria-hidden="true" />
                 {t("nav.adminPanel")}
               </Link>
             )}
             {!user && (
-              <Link to="/marketplace" className={navLinkClass(isActive("/marketplace"))}>
+              <Link to="/marketplace" aria-current={isActive("/marketplace") ? "page" : undefined} className={navLinkClass(isActive("/marketplace"))}>
                 {t("nav.marketplace")}
               </Link>
             )}
-            <Link to={sellLink.to} className={navLinkClass(isActive(sellLink.to))}>
+            <Link to={sellLink.to} aria-current={isActive(sellLink.to) ? "page" : undefined} className={navLinkClass(isActive(sellLink.to))}>
               {sellLink.label}
             </Link>
           </div>
@@ -129,11 +137,13 @@ export default function Navbar() {
                   setSettingsOpen(false);
                 }}
                 className="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors"
-                aria-label="Notifications"
+                aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
+                aria-expanded={notifOpen}
+                aria-haspopup="dialog"
               >
-                <Bell className="w-4.5 h-4.5" />
+                <Bell className="w-4.5 h-4.5" aria-hidden="true" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 min-w-4 h-4 bg-indigo-600 dark:bg-indigo-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center leading-none px-0.5">
+                  <span className="absolute top-1 right-1 min-w-4 h-4 bg-indigo-600 dark:bg-indigo-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center leading-none px-0.5" aria-hidden="true">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -152,32 +162,36 @@ export default function Navbar() {
                 className={`p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors ${
                   settingsOpen ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white" : ""
                 }`}
-                aria-label="Settings"
+                aria-label="Preferences"
+                aria-expanded={settingsOpen}
+                aria-haspopup="menu"
               >
-                <Settings className="w-4.5 h-4.5" />
+                <Settings className="w-4.5 h-4.5" aria-hidden="true" />
               </button>
 
               {settingsOpen && (
-                <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-lg shadow-black/5 py-1.5 z-50">
-                  <p className="px-3 py-1.5 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+                <div role="menu" aria-label="Preferences" className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-lg shadow-black/5 py-1.5 z-50">
+                  <p className="px-3 py-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide" aria-hidden="true">
                     {t("nav.preferences")}
                   </p>
                   <button
+                    role="menuitem"
                     onClick={toggle}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                   >
-                    {theme === "dark" ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
+                    {theme === "dark" ? <Sun className="w-4 h-4 shrink-0" aria-hidden="true" /> : <Moon className="w-4 h-4 shrink-0" aria-hidden="true" />}
                     {theme === "dark" ? t("nav.lightMode") : t("nav.darkMode")}
                   </button>
                   <button
+                    role="menuitem"
                     onClick={toggleLang}
                     className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                   >
                     <div className="flex items-center gap-2.5">
-                      <Globe className="w-4 h-4 shrink-0" />
+                      <Globe className="w-4 h-4 shrink-0" aria-hidden="true" />
                       {t("nav.language")}
                     </div>
-                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400" aria-label={lang === "en" ? "Switch to Hebrew" : "Switch to English"}>
                       {lang === "en" ? "עב" : "EN"}
                     </span>
                   </button>
@@ -195,53 +209,58 @@ export default function Navbar() {
                       setSettingsOpen(false);
                       setNotifOpen(false);
                     }}
+                    aria-label={`Account menu for ${user.name}`}
+                    aria-expanded={userMenuOpen}
+                    aria-haspopup="menu"
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
                       userMenuOpen
                         ? "bg-slate-100 dark:bg-white/10"
                         : "hover:bg-slate-100 dark:hover:bg-white/10"
                     }`}
                   >
-                    <div className="w-6 h-6 rounded-full bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center shrink-0">
-                      <User className="w-3.5 h-3.5 text-white" />
+                    <div className="w-6 h-6 rounded-full bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center shrink-0" aria-hidden="true">
+                      <User className="w-3.5 h-3.5 text-white" aria-hidden="true" />
                     </div>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 max-w-28 truncate">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 max-w-28 truncate" aria-hidden="true">
                       {user.name}
                     </span>
                     <ChevronDown
                       className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${
                         userMenuOpen ? "rotate-180" : ""
                       }`}
+                      aria-hidden="true"
                     />
                   </button>
 
                   {userMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-lg shadow-black/5 py-1.5 z-50">
-                      <p className="px-3 py-1.5 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide truncate">
+                    <div role="menu" aria-label={`Account menu for ${user.name}`} className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-lg shadow-black/5 py-1.5 z-50">
+                      <p className="px-3 py-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide truncate" aria-hidden="true">
                         {user.name}
                       </p>
-                      <div className="border-t border-slate-100 dark:border-white/5 my-1" />
-                      <Link to="/marketplace" onClick={closeAll} className={dropdownLinkClass(isActive("/marketplace"))}>
-                        <ShoppingBag className="w-4 h-4 shrink-0" />
+                      <div className="border-t border-slate-100 dark:border-white/5 my-1" role="separator" />
+                      <Link role="menuitem" to="/marketplace" onClick={closeAll} className={dropdownLinkClass(isActive("/marketplace"))}>
+                        <ShoppingBag className="w-4 h-4 shrink-0" aria-hidden="true" />
                         {t("nav.marketplace")}
                       </Link>
                       {user.permissionLevel !== 3 && (
-                        <Link to="/buyer-dashboard" onClick={closeAll} className={dropdownLinkClass(isActive("/buyer-dashboard"))}>
-                          <Ticket className="w-4 h-4 shrink-0" />
+                        <Link role="menuitem" to="/buyer-dashboard" onClick={closeAll} className={dropdownLinkClass(isActive("/buyer-dashboard"))}>
+                          <Ticket className="w-4 h-4 shrink-0" aria-hidden="true" />
                           {t("nav.myTickets")}
                         </Link>
                       )}
                       {user.permissionLevel >= 2 && (
-                        <Link to="/seller-dashboard" onClick={closeAll} className={dropdownLinkClass(isActive("/seller-dashboard"))}>
-                          <LayoutList className="w-4 h-4 shrink-0" />
+                        <Link role="menuitem" to="/seller-dashboard" onClick={closeAll} className={dropdownLinkClass(isActive("/seller-dashboard"))}>
+                          <LayoutList className="w-4 h-4 shrink-0" aria-hidden="true" />
                           {t("nav.myListings")}
                         </Link>
                       )}
-                      <div className="border-t border-slate-100 dark:border-white/5 my-1" />
+                      <div className="border-t border-slate-100 dark:border-white/5 my-1" role="separator" />
                       <button
+                        role="menuitem"
                         onClick={handleLogout}
                         className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
                       >
-                        <LogOut className="w-4 h-4 shrink-0" />
+                        <LogOut className="w-4 h-4 shrink-0" aria-hidden="true" />
                         {t("nav.logOut")}
                       </button>
                     </div>
@@ -252,12 +271,14 @@ export default function Navbar() {
               <div className="hidden md:flex items-center gap-2 ml-1">
                 <Link
                   to="/login"
+                  aria-current={isActive("/login") ? "page" : undefined}
                   className="px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   {t("nav.signIn")}
                 </Link>
                 <Link
                   to="/register"
+                  aria-current={isActive("/register") ? "page" : undefined}
                   className="px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white transition-colors shadow-sm shadow-indigo-500/25"
                 >
                   {t("nav.getStarted")}
@@ -268,9 +289,12 @@ export default function Navbar() {
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-menu"
               className="md:hidden p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
             >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileOpen ? <X className="w-5 h-5" aria-hidden="true" /> : <Menu className="w-5 h-5" aria-hidden="true" />}
             </button>
           </div>
         </div>
@@ -278,36 +302,39 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-slate-200 dark:border-white/5 bg-white dark:bg-zinc-950 px-4 py-3 space-y-1">
+        <div id="mobile-menu" className="md:hidden border-t border-slate-200 dark:border-white/5 bg-white dark:bg-zinc-950 px-4 py-3 space-y-1">
           {user?.permissionLevel === 3 && (
             <Link
               to="/admin"
               onClick={() => setMobileOpen(false)}
+              aria-current={isActive("/admin") ? "page" : undefined}
               className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                 isActive("/admin")
                   ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400"
                   : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5"
               }`}
             >
-              <ShieldCheck className="w-4 h-4" />
+              <ShieldCheck className="w-4 h-4" aria-hidden="true" />
               {t("nav.adminPanel")}
             </Link>
           )}
           <Link
             to="/marketplace"
             onClick={() => setMobileOpen(false)}
+            aria-current={isActive("/marketplace") ? "page" : undefined}
             className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
               isActive("/marketplace")
                 ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white"
                 : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5"
             }`}
           >
-            <ShoppingBag className="w-4 h-4" />
+            <ShoppingBag className="w-4 h-4" aria-hidden="true" />
             {t("nav.marketplace")}
           </Link>
           <Link
             to={sellLink.to}
             onClick={() => setMobileOpen(false)}
+            aria-current={isActive(sellLink.to) ? "page" : undefined}
             className={`block px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
               isActive(sellLink.to)
                 ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white"
@@ -320,13 +347,14 @@ export default function Navbar() {
             <Link
               to="/buyer-dashboard"
               onClick={() => setMobileOpen(false)}
+              aria-current={isActive("/buyer-dashboard") ? "page" : undefined}
               className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                 isActive("/buyer-dashboard")
                   ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white"
                   : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5"
               }`}
             >
-              <Ticket className="w-4 h-4" />
+              <Ticket className="w-4 h-4" aria-hidden="true" />
               {t("nav.myTickets")}
             </Link>
           )}
@@ -334,27 +362,28 @@ export default function Navbar() {
             <Link
               to="/seller-dashboard"
               onClick={() => setMobileOpen(false)}
+              aria-current={isActive("/seller-dashboard") ? "page" : undefined}
               className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                 isActive("/seller-dashboard")
                   ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white"
                   : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5"
               }`}
             >
-              <LayoutList className="w-4 h-4" />
+              <LayoutList className="w-4 h-4" aria-hidden="true" />
               {t("nav.myListings")}
             </Link>
           )}
 
           {/* Preferences */}
           <div className="pt-2 border-t border-slate-100 dark:border-white/5">
-            <p className="px-3 py-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+            <p className="px-3 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide" aria-hidden="true">
               {t("nav.preferences")}
             </p>
             <button
               onClick={toggle}
               className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
             >
-              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {theme === "dark" ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
               {theme === "dark" ? t("nav.lightMode") : t("nav.darkMode")}
             </button>
             <button
@@ -362,10 +391,10 @@ export default function Navbar() {
               className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
             >
               <div className="flex items-center gap-2.5">
-                <Globe className="w-4 h-4" />
+                <Globe className="w-4 h-4" aria-hidden="true" />
                 {t("nav.language")}
               </div>
-              <span className="text-xs font-bold text-slate-400">
+              <span className="text-xs font-bold text-slate-400" aria-label={lang === "en" ? "Switch to Hebrew" : "Switch to English"}>
                 {lang === "en" ? "עברית" : "English"}
               </span>
             </button>
@@ -376,8 +405,8 @@ export default function Navbar() {
             {user ? (
               <>
                 <div className="flex items-center gap-2 px-3 py-1.5">
-                  <div className="w-6 h-6 rounded-full bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center shrink-0">
-                    <User className="w-3.5 h-3.5 text-white" />
+                  <div className="w-6 h-6 rounded-full bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center shrink-0" aria-hidden="true">
+                    <User className="w-3.5 h-3.5 text-white" aria-hidden="true" />
                   </div>
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
                     {user.name}
@@ -387,7 +416,7 @@ export default function Navbar() {
                   onClick={handleLogout}
                   className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 border border-slate-200 dark:border-white/10 transition-colors"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-4 h-4" aria-hidden="true" />
                   {t("nav.logOut")}
                 </button>
               </>

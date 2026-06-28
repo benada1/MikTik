@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Mail, CheckCircle, Ticket } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -9,6 +9,8 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { t } = useLanguage();
+
+  useEffect(() => { document.title = 'Forgot Password | MikTik'; }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,18 +68,20 @@ export default function ForgotPasswordPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">{t('forgotPassword.emailLabel')}</label>
+                <label htmlFor="forgot-email" className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">{t('forgotPassword.emailLabel')}</label>
                 <input
+                  id="forgot-email"
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
+                  autoComplete="email"
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                 />
               </div>
               {error && (
-                <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+                <p role="alert" className="text-sm text-red-500 dark:text-red-400">{error}</p>
               )}
               <button
                 type="submit"
