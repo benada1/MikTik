@@ -20,7 +20,6 @@ interface SellerApp {
   dateOfBirth: string;
   address: Address;
   bio: string;
-  idImageUrl: string;
   status: 'pending' | 'approved' | 'rejected' | 'revoked';
   rejectionReason: string;
   reviewedAt: string;
@@ -443,19 +442,6 @@ export default function AdminPanelPage() {
                 </div>
               )}
 
-              {selected.idImageUrl && (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{t('admin.idDocument')}</p>
-                  <a
-                    href={`http://localhost:5000${selected.idImageUrl}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
-                  >
-                    {t('admin.viewDocument')}
-                  </a>
-                </div>
-              )}
 
               {(selected.status === 'rejected' || selected.status === 'revoked') && selected.rejectionReason && (
                 <div className="space-y-2">

@@ -29,7 +29,6 @@ const sellerSchema = new mongoose.Schema(
 
     // ID verification
     verification: {
-      idImageUrl: { type: String, default: '' },
       status: {
         type: String,
         enum: ['unverified', 'pending', 'verified', 'rejected'],

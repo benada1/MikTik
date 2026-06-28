@@ -1,7 +1,4 @@
 const express = require('express');
-const path = require('path');
-const fs = require('fs');
-const multer = require('multer');
 const SellerApplication = require('../models/SellerApplication');
 const Seller = require('../models/Seller');
 const User = require('../models/User');
@@ -10,35 +7,10 @@ const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
-const uploadsDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (_req: any, _file: any, cb: any) => cb(null, uploadsDir),
-  filename: (_req: any, file: any, cb: any) => {
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `id-${unique}${path.extname(file.originalname)}`);
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (_req: any, file: any, cb: any) => {
-    const allowed = ['.pdf', '.png', '.jpg', '.jpeg'];
-    if (allowed.includes(path.extname(file.originalname).toLowerCase())) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only PDF, PNG, and JPG files are allowed'));
-    }
-  },
-});
-
 // POST /api/seller-applications — level-1 users only
-router.post('/', authMiddleware, upload.single('idImage'), async (req: any, res: any) => {
+router.post('/', authMiddleware, async (req: any, res: any) => {
   try {
     if (req.user.permissionLevel !== 1) {
-      if (req.file) fs.unlinkSync(req.file.path);
       return res.status(400).json({ error: 'Only regular users can apply to become a seller' });
     }
 
@@ -54,38 +26,24 @@ router.post('/', authMiddleware, upload.single('idImage'), async (req: any, res:
 
     if (existing) {
       if (existing.status === 'pending') {
-        if (req.file) fs.unlinkSync(req.file.path);
         return res.status(409).json({ error: 'You already have a pending application' });
       }
       if (existing.status === 'approved') {
-        if (req.file) fs.unlinkSync(req.file.path);
         return res.status(409).json({ error: 'Your application was already approved' });
       }
 
-      // Rejected — allow resubmit; keep old ID image if no new one uploaded
-      const idImageUrl = req.file ? `/uploads/${req.file.filename}` : existing.idImageUrl;
-      if (req.file && existing.idImageUrl) {
-        const oldPath = path.join(process.cwd(), existing.idImageUrl);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-      }
-
+      // Rejected — allow resubmit
       existing.fullName = fullName.trim();
       existing.phone = phone.trim();
       existing.idNumber = idNumber.trim();
       existing.dateOfBirth = new Date(dateOfBirth);
       existing.address = { street: street?.trim() || '', city: city.trim(), country: country?.trim() || 'Israel' };
       existing.bio = bio?.trim() || '';
-      existing.idImageUrl = idImageUrl;
       existing.status = 'pending';
       existing.rejectionReason = '';
       existing.reviewedAt = undefined;
       await existing.save();
       return res.json({ application: existing });
-    }
-
-    // New application — ID image required
-    if (!req.file) {
-      return res.status(400).json({ error: 'ID document image is required' });
     }
 
     const application = await SellerApplication.create({
@@ -96,12 +54,10 @@ router.post('/', authMiddleware, upload.single('idImage'), async (req: any, res:
       dateOfBirth: new Date(dateOfBirth),
       address: { street: street?.trim() || '', city: city.trim(), country: country?.trim() || 'Israel' },
       bio: bio?.trim() || '',
-      idImageUrl: `/uploads/${req.file.filename}`,
     });
 
     res.status(201).json({ application });
   } catch (err: any) {
-    if (req.file) fs.unlinkSync(req.file.path);
     console.error('Seller application error:', err);
     res.status(500).json({ error: 'Server error' });
   }
@@ -168,7 +124,6 @@ router.patch('/:id/approve', authMiddleware, authMiddleware.requireAdmin, async 
         bio: application.bio,
         location: application.address.city,
         verification: {
-          idImageUrl: application.idImageUrl,
           status: 'verified',
           submittedAt: application.createdAt,
           reviewedAt: new Date(),

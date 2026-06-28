@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, type FormEvent, type ChangeEvent } from 'react';
+import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, Clock, XCircle, Upload, User, MapPin, FileText, X } from 'lucide-react';
+import { Store, Clock, XCircle, User, MapPin, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -52,12 +52,10 @@ export default function BecomeSellerPage() {
 
   const { user } = useAuth();
   const navigate = useNavigate();
-  const fileRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
 
   const [appStatus, setAppStatus] = useState<AppStatus>('none');
   const [rejectionReason, setRejectionReason] = useState('');
-  const [hasExistingIdImage, setHasExistingIdImage] = useState(false);
   const [form, setForm] = useState<FormState>({
     fullName: user?.name || '',
     phone: '',
@@ -68,7 +66,6 @@ export default function BecomeSellerPage() {
     country: 'Israel',
     bio: '',
   });
-  const [idImage, setIdImage] = useState<File | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -88,7 +85,6 @@ export default function BecomeSellerPage() {
           const app = data.application;
           setAppStatus(app.status);
           setRejectionReason(app.rejectionReason || '');
-          setHasExistingIdImage(!!app.idImageUrl);
           if (app.status === 'rejected') {
             setForm({
               fullName: app.fullName || user?.name || '',
@@ -110,38 +106,16 @@ export default function BecomeSellerPage() {
   const set = (field: keyof FormState) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }));
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setIdImage(file);
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
-
-    if (!idImage && !hasExistingIdImage) {
-      setError(t('becomeSeller.uploadIdError'));
-      return;
-    }
-
     setSubmitting(true);
     try {
       const token = localStorage.getItem('tt_token');
-      const fd = new FormData();
-      fd.append('fullName', form.fullName);
-      fd.append('phone', form.phone);
-      fd.append('idNumber', form.idNumber);
-      fd.append('dateOfBirth', form.dateOfBirth);
-      fd.append('street', form.street);
-      fd.append('city', form.city);
-      fd.append('country', form.country);
-      fd.append('bio', form.bio);
-      if (idImage) fd.append('idImage', idImage);
-
       const res = await fetch(`${API}/seller-applications`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || t('becomeSeller.failed'));
@@ -298,59 +272,6 @@ export default function BecomeSellerPage() {
                 className={`${INPUT} resize-none`}
               />
             </Field>
-          </Section>
-
-          {/* ID document upload */}
-          <Section icon={Upload} title={t('becomeSeller.identityVerification')}>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t('becomeSeller.uploadIdDesc')}
-            </p>
-
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-
-            {idImage ? (
-              <div className="flex items-center gap-3 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl">
-                <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
-                  <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-                </div>
-                <p className="flex-1 text-sm text-slate-700 dark:text-slate-300 truncate">{idImage.name}</p>
-                <button
-                  type="button"
-                  aria-label={`Remove ${idImage.name}`}
-                  onClick={() => { setIdImage(null); if (fileRef.current) fileRef.current.value = ''; }}
-                  className="text-slate-400 hover:text-red-500 transition-colors"
-                >
-                  <X className="w-4 h-4" aria-hidden="true" />
-                </button>
-              </div>
-            ) : hasExistingIdImage ? (
-              <div className="flex items-center justify-between gap-3 px-4 py-3 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl">
-                <p className="text-sm text-slate-500 dark:text-slate-400">{t('becomeSeller.previousDocOnFile')}</p>
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  className="text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:underline"
-                >
-                  {t('becomeSeller.replace')}
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="w-full flex flex-col items-center justify-center gap-2 px-4 py-8 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl text-slate-400 hover:border-indigo-400 hover:text-indigo-500 dark:hover:border-indigo-500 transition-colors"
-              >
-                <Upload className="w-6 h-6" aria-hidden="true" />
-                <span className="text-sm font-medium">{t('becomeSeller.uploadIdClick')}</span>
-                <span className="text-xs">{t('becomeSeller.uploadIdFormat')}</span>
-              </button>
-            )}
           </Section>
 
           {error && (

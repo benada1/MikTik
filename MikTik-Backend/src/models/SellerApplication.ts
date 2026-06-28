@@ -20,9 +20,6 @@ const sellerApplicationSchema = new mongoose.Schema(
     // Profile
     bio: { type: String, default: '', trim: true },
 
-    // ID document
-    idImageUrl: { type: String, default: '' },
-
     // Review
     status: {
       type: String,
